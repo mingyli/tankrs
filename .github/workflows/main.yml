@@ -6,6 +6,9 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -15,12 +18,14 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
-          working-directory: server
           command: check
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -30,12 +35,14 @@ jobs:
           override: true
       - uses: actions-rs/cargo@v1
         with:
-          working-directory: server
           command: test
 
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -46,13 +53,15 @@ jobs:
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:
-          working-directory: server
           command: fmt
           args: --all -- --check
 
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -63,6 +72,5 @@ jobs:
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
-          working-directory: server
           command: clippy
           args: -- -W clippy::all -W clippy::pedantic -D warnings
