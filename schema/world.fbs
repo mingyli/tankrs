@@ -1,0 +1,16 @@
+// The definition for the base game state.
+
+namespace Tankrs;
+
+table World {
+    // Dimensions of each cell in pixels.
+    cell_width: uint16 = 40;
+    cell_height: uint16 = 40;
+
+    // Dimensions of the grid in number of cells.
+    grid_width: uint16;
+    grid_height: uint16;
+}
+
+root_type World;
+
