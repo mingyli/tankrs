@@ -1,19 +1,10 @@
 [package]
 name = "tankrs"
 version = "0.1.0"
-authors = ["ming li <mingyli34@gmail.com>"]
+authors = ["ming li <mingyli34@gmail.com>", "michael luo <mluogh@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
-wasm-bindgen = "0.2"
-
-[dev-dependencies]
-wasm-bindgen-test = "0.2"
 
 [profile.release]
 opt-level = "s"
