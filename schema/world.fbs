@@ -1,0 +1,8 @@
+namespace Tankrs;
+
+table World {
+    width: uint16;
+    height: uint16;
+}
+
+root_type World;
