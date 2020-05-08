@@ -6,10 +6,8 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
     steps:
+      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -23,10 +21,8 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
     steps:
+      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -40,10 +36,8 @@ jobs:
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
     steps:
+      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -59,10 +53,8 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
     steps:
+      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
