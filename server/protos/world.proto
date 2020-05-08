@@ -6,6 +6,7 @@ package tankrs;
 
 // Last added: height = 2.
 message World {
+    // Dimensions in number of cells in a grid.
     uint32 width = 1;
     uint32 height = 2;
 }
