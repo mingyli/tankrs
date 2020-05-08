@@ -7,13 +7,13 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
-      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
+      - run: cd server
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -22,13 +22,13 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
-      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
+      - run: cd server
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -45,6 +45,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add rustfmt
+      - run: cd server
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -54,7 +55,6 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -62,6 +62,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
+      - run: cd server
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
