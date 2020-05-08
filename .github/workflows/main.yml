@@ -40,7 +40,6 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - run: cd server
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
@@ -64,7 +63,6 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
-      - run: cd server
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
