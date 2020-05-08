@@ -2,6 +2,9 @@ on: [push, pull_request]
 
 name: Continuous integration
 
+env:
+  cargo-path: server/Cargo.toml
+
 jobs:
   check:
     name: Check
@@ -16,7 +19,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --manifest-path=server/Cargo.toml
+          args: --manifest-path=${{env.cargo-path}}
 
   test:
     name: Test Suite
@@ -31,7 +34,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --manifest-path=server/Cargo.toml
+          args: --manifest-path=${{env.cargo-path}}
 
   fmt:
     name: Rustfmt
@@ -45,11 +48,10 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add rustfmt
-      - run: cd server
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all --manifest-path=server/Cargo.toml -- --check
+          args: --all --manifest-path=${{env.cargo-path}} -- --check
 
   clippy:
     name: Clippy
@@ -66,4 +68,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path=server/Cargo.toml -- -W clippy::all -W clippy::pedantic -D warnings
+          args: --manifest-path=${{env.cargo-path}} -- -W clippy::all -W clippy::pedantic -D warnings
