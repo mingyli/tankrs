@@ -1,0 +1,11 @@
+// The definition for the base game state.
+
+syntax = "proto3";
+
+package tankrs;
+
+// Last added: height = 2.
+message World {
+    uint32 width = 1;
+    uint32 height = 2;
+}
