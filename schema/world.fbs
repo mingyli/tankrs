@@ -1,0 +1,12 @@
+// The definition for the base game state.
+
+namespace Tankrs;
+
+table World {
+    // Dimensions of the world.
+    width: uint16;
+    height: uint16;
+}
+
+root_type World;
+

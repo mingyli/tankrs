@@ -3,14 +3,62 @@ on: [push, pull_request]
 name: Continuous integration
 
 env:
-  cargo-path: server/Cargo.toml
+  cargo-path: Cargo.toml
 
 jobs:
-  check:
-    name: Check
+  flatbuffers:
+    name: Install Flatbuffers
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          repository: google/flatbuffers
+          ref: v1.11.0
+      - name: cmake 
+        run: cmake -G "Unix Makefiles"
+      - name: make
+        run: make
+      - name: executable
+        run: chmod +x ./flatc
+      - name: Upload flatc binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: flatbuffers
+          path: flatc
+      
+  build:
+    name: Build
+    needs: flatbuffers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download flatc binary
+        uses: actions/download-artifact@v1
+        with: 
+          name: flatbuffers
+      - name: chmod
+        run: chmod +x flatbuffers/flatc
+      - name: add to path
+        run: echo "::add-path::$(realpath flatbuffers)"
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --manifest-path=${{env.cargo-path}}
+
+  check:
+    name: Check
+    needs: flatbuffers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download flatc binary
+        uses: actions/download-artifact@v1
+        with: 
+          name: flatbuffers
+      - name: chmod
+        run: chmod +x flatbuffers/flatc
+      - name: add to path
+        run: echo "::add-path::$(realpath flatbuffers)"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -23,9 +71,18 @@ jobs:
 
   test:
     name: Test Suite
+    needs: flatbuffers
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Download flatc binary
+        uses: actions/download-artifact@v1
+        with: 
+          name: flatbuffers
+      - name: chmod
+        run: chmod +x flatbuffers/flatc
+      - name: add to path
+        run: echo "::add-path::$(realpath flatbuffers)"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -38,9 +95,18 @@ jobs:
 
   fmt:
     name: Rustfmt
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Download flatc binary
+        uses: actions/download-artifact@v1
+        with: 
+          name: flatbuffers
+      - name: chmod
+        run: chmod +x flatbuffers/flatc
+      - name: add to path
+        run: echo "::add-path::$(realpath flatbuffers)"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -49,14 +115,27 @@ jobs:
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:
+          command: build
+          args: --manifest-path=${{env.cargo-path}}
+      - uses: actions-rs/cargo@v1
+        with:
           command: fmt
           args: --all --manifest-path=${{env.cargo-path}} -- --check
 
   clippy:
     name: Clippy
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Download flatc binary
+        uses: actions/download-artifact@v1
+        with: 
+          name: flatbuffers
+      - name: chmod
+        run: chmod +x flatbuffers/flatc
+      - name: add to path
+        run: echo "::add-path::$(realpath flatbuffers)"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -66,4 +145,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path=${{env.cargo-path}} -- -W clippy::all -W clippy::pedantic -D warnings
+          args: --manifest-path=${{env.cargo-path}}
