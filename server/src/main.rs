@@ -33,7 +33,8 @@ async fn run() -> anyhow::Result<()> {
 
     let server = TcpListener::bind("127.0.0.1:9001").await?;
     println!("Starting server");
-    while let Ok((stream, _address)) = server.accept().await {
+    while let Ok((stream, address)) = server.accept().await {
+        println!("Received on address {}", address);
         let w = world_arc.clone();
         task::spawn(handle_client(stream, w));
     }
