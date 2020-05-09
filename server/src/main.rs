@@ -7,10 +7,7 @@ use world::{Block, BlockType, DiscretePos, World};
 
 use tungstenite::Message;
 
-fn handle_client(
-    stream: TcpStream,
-    my: &Arc<Vec<u8>>,
-) -> tungstenite::Result<()> {
+fn handle_client(stream: TcpStream, my: &Arc<Vec<u8>>) -> tungstenite::Result<()> {
     let mut socket = tungstenite::accept(stream).unwrap();
     println!("Running test");
     loop {
@@ -25,8 +22,7 @@ fn main() {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let mut my_world = World::new(69, 420);
     my_world.add_block(Block::new(DiscretePos(0, 0), BlockType::DESTRUCTIBLE));
-    my_world
-        .add_block(Block::new(DiscretePos(1, 0), BlockType::INDESTRUCTIBLE));
+    my_world.add_block(Block::new(DiscretePos(1, 0), BlockType::INDESTRUCTIBLE));
 
     let world_arc = Arc::new(my_world.to_fb_bytes(&mut builder));
 
