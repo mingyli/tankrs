@@ -1,23 +1,24 @@
-use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
-use std::thread::spawn;
 
+use async_std::net::{TcpListener, TcpStream};
+use async_std::task;
+use futures::prelude::*;
 use tungstenite::Message;
 
 use schema::world_generated::{World, WorldArgs};
 
-fn handle_client(stream: TcpStream, my: &Arc<Vec<u8>>) -> tungstenite::Result<()> {
-    let mut socket = tungstenite::accept(stream).unwrap();
+async fn handle_client(stream: TcpStream, my: Arc<Vec<u8>>) -> anyhow::Result<()> {
+    let mut ws_stream = async_tungstenite::accept_async(stream).await?;
     println!("Running test");
+
     loop {
         use std::{thread, time};
-        socket.write_message(Message::Text("hi hi hi".to_string()))?;
-        socket.write_message(Message::Binary(my.to_vec()))?;
+        ws_stream.send(Message::Binary(my.to_vec())).await?;
         thread::sleep(time::Duration::from_secs(2));
     }
 }
 
-fn main() {
+async fn run() -> anyhow::Result<()> {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let world = World::create(
         &mut builder,
@@ -28,25 +29,17 @@ fn main() {
     );
     builder.finish(world, None);
     let buffer = builder.finished_data().to_vec();
-
     let world_arc = Arc::new(buffer);
 
-    let server = TcpListener::bind("127.0.0.1:9001").unwrap();
+    let server = TcpListener::bind("127.0.0.1:9001").await?;
     println!("Starting server");
-    for stream in server.incoming() {
+    while let Ok((stream, _address)) = server.accept().await {
         let w = world_arc.clone();
-        spawn(move || match stream {
-            Ok(stream) => {
-                if let Err(err) = handle_client(stream, &w) {
-                    match err {
-                        tungstenite::Error::ConnectionClosed
-                        | tungstenite::Error::Protocol(_)
-                        | tungstenite::Error::Utf8 => (),
-                        e => eprintln!("test: {}", e),
-                    }
-                }
-            }
-            Err(e) => eprintln!("Error accepting stream: {}", e),
-        });
+        task::spawn(handle_client(stream, w));
     }
+    Ok(())
+}
+
+fn main() -> anyhow::Result<()> {
+    task::block_on(run())
 }
