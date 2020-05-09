@@ -10,12 +10,12 @@ fn handle_client(stream: TcpStream, _my: &Arc<Vec<u8>>) -> tungstenite::Result<(
     use std::{thread, time};
     let mut socket = tungstenite::accept(stream).unwrap();
     println!("Running test");
-    let x_end: f32 = 10.0;
+    let x_end: f64 = 10.0;
     let tick_rate = time::Duration::from_millis(1000 / 60);
     let ticks = 3 * 60;
     loop {
         for i in 0..ticks {
-            let pos: f32 = (x_end / (ticks as f32)) * (i as f32);
+            let pos: f64 = (x_end / (ticks as f64)) * (i as f64);
             socket.write_message(Message::Text(pos.to_string()))?;
             thread::sleep(tick_rate);
         }
