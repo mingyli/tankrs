@@ -10,13 +10,18 @@ edition = "2018"
 name = "server"
 path = "server/src/main.rs"
 
-[[bin]]
+[[example]]
 name = "client"
-path = "server/src/client.rs"
 
 [dependencies]
 schema = { path = "schema/rust" }
 flatbuffers = "0.6.1"
 tungstenite = "0.10.1"
+futures = "0.3.5"
+async-tungstenite = "0.4.2"
+async-std = "1.5.0"
+anyhow = "1.0.28"
+
+[dev-dependencies]
 url = "2.1.1"
 
