@@ -6,7 +6,7 @@ use tungstenite::Message;
 
 use schema::world_generated::{World, WorldArgs};
 
-fn handle_client(stream: TcpStream, my: Arc<Vec<u8>>) -> tungstenite::Result<()> {
+fn handle_client(stream: TcpStream, my: &Arc<Vec<u8>>) -> tungstenite::Result<()> {
     let mut socket = tungstenite::accept(stream).unwrap();
     println!("Running test");
     loop {
@@ -37,7 +37,7 @@ fn main() {
         let w = world_arc.clone();
         spawn(move || match stream {
             Ok(stream) => {
-                if let Err(err) = handle_client(stream, w) {
+                if let Err(err) = handle_client(stream, &w) {
                     match err {
                         tungstenite::Error::ConnectionClosed
                         | tungstenite::Error::Protocol(_)
