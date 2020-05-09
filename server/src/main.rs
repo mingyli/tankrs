@@ -6,7 +6,7 @@ use tungstenite::Message;
 
 use schema::world_generated::{World, WorldArgs};
 
-fn handle_client(stream: TcpStream, my: &Arc<Vec<u8>>) -> tungstenite::Result<()> {
+fn handle_client(stream: TcpStream, _my: &Arc<Vec<u8>>) -> tungstenite::Result<()> {
     use std::{thread, time};
     let mut socket = tungstenite::accept(stream).unwrap();
     println!("Running test");
