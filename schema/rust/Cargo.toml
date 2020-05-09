@@ -1,15 +1,13 @@
 [package]
-name = "tankrs"
+name = "schema"
 version = "0.1.0"
-authors = ["ming li <mingyli34@gmail.com>", "michael luo <mluogh@gmail.com>"]
+authors = ["mluogh <mluogh@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[bin]]
-name = "server"
-path = "server/src/main.rs"
-
 [dependencies]
-schema = { path = "schema/rust" }
 flatbuffers = "0.6.1"
+
+[build-dependencies]
+flatc-rust = "0.1.2"
