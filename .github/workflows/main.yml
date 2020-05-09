@@ -145,4 +145,5 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path=${{env.cargo-path}} -- -W clippy::all -W clippy::pedantic -D warnings
+          args: --manifest-path=${{env.cargo-path}} 
+          # args: --manifest-path=${{env.cargo-path}} -- -W clippy::all -W clippy::pedantic -D warnings
