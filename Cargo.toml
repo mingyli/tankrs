@@ -10,6 +10,13 @@ edition = "2018"
 name = "server"
 path = "server/src/main.rs"
 
+[[bin]]
+name = "client"
+path = "server/src/client.rs"
+
 [dependencies]
 schema = { path = "schema/rust" }
 flatbuffers = "0.6.1"
+tungstenite = "0.10.1"
+url = "2.1.1"
+
