@@ -1,7 +1,7 @@
 use std::path::Path;
 
 fn main() {
-    println!("cargo:rerun-if-changed=schema/");
+    println!("cargo:rerun-if-changed=./");
     flatc_rust::run(flatc_rust::Args {
         inputs: &[Path::new("schema/world.fbs")],
         out_dir: Path::new("schema/rust/src"),
