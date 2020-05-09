@@ -1,13 +1,4 @@
-#[path = "../../schema/schema.rs"]
-mod schema;
 use schema::world_generated::{get_root_as_world, World, WorldArgs};
-
-impl World<'_> {
-    // Demo custom methods.
-    fn foo(&self) -> u16 {
-        self.width() * self.height()
-    }
-}
 
 fn main() {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
@@ -29,5 +20,4 @@ fn main() {
         world.width(),
         world.height()
     );
-    println!("foo: {}", world.foo());
 }
