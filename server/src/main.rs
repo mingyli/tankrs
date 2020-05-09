@@ -1,12 +1,16 @@
+mod world;
+
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 use std::thread::spawn;
+use world::{Block, BlockType, DiscretePos, World};
 
 use tungstenite::Message;
 
-use schema::world_generated::{World, WorldArgs};
-
-fn handle_client(stream: TcpStream, my: &Arc<Vec<u8>>) -> tungstenite::Result<()> {
+fn handle_client(
+    stream: TcpStream,
+    my: &Arc<Vec<u8>>,
+) -> tungstenite::Result<()> {
     let mut socket = tungstenite::accept(stream).unwrap();
     println!("Running test");
     loop {
@@ -19,17 +23,12 @@ fn handle_client(stream: TcpStream, my: &Arc<Vec<u8>>) -> tungstenite::Result<()
 
 fn main() {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
-    let world = World::create(
-        &mut builder,
-        &WorldArgs {
-            width: 40,
-            height: 30,
-        },
-    );
-    builder.finish(world, None);
-    let buffer = builder.finished_data().to_vec();
+    let mut my_world = World::new(69, 420);
+    my_world.add_block(Block::new(DiscretePos(0, 0), BlockType::DESTRUCTIBLE));
+    my_world
+        .add_block(Block::new(DiscretePos(1, 0), BlockType::INDESTRUCTIBLE));
 
-    let world_arc = Arc::new(buffer);
+    let world_arc = Arc::new(my_world.to_fb_bytes(&mut builder));
 
     let server = TcpListener::bind("127.0.0.1:9001").unwrap();
     println!("Starting server");
