@@ -1,4 +1,4 @@
-#[allow(dead_code, unused_imports, clippy::redundant_field_names)]
+#[allow(dead_code, unused_imports, clippy::all)]
 #[path = "../../schema/rust/world_generated.rs"]
 mod world_generated;
 use world_generated::tankrs::{get_root_as_world, World, WorldArgs};
@@ -23,7 +23,7 @@ fn main() {
             &WorldArgs {
                 grid_width: 40,
                 grid_height: 30,
-                ..Default::default()
+                ..WorldArgs::default()
             },
         );
         builder.finish(world, None);
