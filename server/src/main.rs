@@ -1,5 +1,4 @@
 #[allow(dead_code, unused_imports, clippy::all)]
-#[rustfmt::skip]
 #[path = "../../schema/rust/world_generated.rs"]
 mod world_generated;
 use world_generated::tankrs::{get_root_as_world, World, WorldArgs};
