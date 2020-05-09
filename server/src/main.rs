@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time;
 
 use async_std::net::{TcpListener, TcpStream};
 use async_std::task;
@@ -10,11 +11,17 @@ use schema::world_generated::{World, WorldArgs};
 async fn handle_client(stream: TcpStream, my: Arc<Vec<u8>>) -> anyhow::Result<()> {
     let mut ws_stream = async_tungstenite::accept_async(stream).await?;
     println!("Running test");
+    let x_end: f64 = 10.0;
+    let tick_rate = time::Duration::from_millis(1000 / 60);
+    let ticks = 3 * 60;
 
     loop {
-        use std::{thread, time};
         ws_stream.send(Message::Binary(my.to_vec())).await?;
-        thread::sleep(time::Duration::from_secs(2));
+        for i in 0..ticks {
+            let pos: f64 = (x_end / f64::from(ticks)) * f64::from(i);
+            ws_stream.send(Message::Text(pos.to_string())).await?;
+            task::sleep(tick_rate).await;
+        }
     }
 }
 
