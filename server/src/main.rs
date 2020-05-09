@@ -5,14 +5,9 @@ mod world_generated;
 use world_generated::tankrs::{get_root_as_world, World, WorldArgs};
 
 impl World<'_> {
-    // Return the width in pixels.
-    fn width(&self) -> u16 {
-        self.cell_width() * self.grid_width()
-    }
-
-    // Return the height in pixels.
-    fn height(&self) -> u16 {
-        self.cell_height() * self.grid_height()
+    // Demo custom methods.
+    fn foo(&self) -> u16 {
+        self.width() * self.height()
     }
 }
 
@@ -22,8 +17,8 @@ fn main() {
         let world = World::create(
             &mut builder,
             &WorldArgs {
-                grid_width: 40,
-                grid_height: 30,
+                width: 40,
+                height: 30,
                 ..WorldArgs::default()
             },
         );
@@ -37,4 +32,5 @@ fn main() {
         world.width(),
         world.height()
     );
+    println!("foo: {}", world.foo());
 }
