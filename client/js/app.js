@@ -86,11 +86,11 @@ function init() {
 
 	// Listen for messages
 	socket.addEventListener('message', function (event) {
-		var x_coord = parseFloat(event.data)
+		console.log("Received: ", event.data);
+		var x_coord = parseFloat(event.data);
 		var brush = canvas.canvas.getContext("2d");
 		brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);		
-		canvas.draw_axis()
-		canvas.draw_box(new Point(x_coord, 0))
-		console.log("x coord: ", x_coord)
+		canvas.draw_axis();
+		canvas.draw_box(new Point(x_coord, 0));
 	});
 }
