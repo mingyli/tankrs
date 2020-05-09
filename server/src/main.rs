@@ -19,7 +19,6 @@ fn main() {
             &WorldArgs {
                 width: 40,
                 height: 30,
-                ..WorldArgs::default()
             },
         );
         builder.finish(world, None);
