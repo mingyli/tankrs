@@ -15,7 +15,7 @@ fn handle_client(stream: TcpStream, _my: &Arc<Vec<u8>>) -> tungstenite::Result<(
     let ticks = 3 * 60;
     loop {
         for i in 0..ticks {
-            let pos: f64 = (x_end / (ticks as f64)) * (i as f64);
+            let pos: f64 = (x_end / f64::from(ticks)) * f64::from(i);
             socket.write_message(Message::Text(pos.to_string()))?;
             thread::sleep(tick_rate);
         }
