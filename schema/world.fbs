@@ -1,10 +1,21 @@
 // The definition for the base game state.
 
-table World {
-    // Dimensions of the world.
-    width: uint16;
-    height: uint16;
+enum BlockType : byte {
+  Destructible,
+  Indestructible, 
 }
 
-root_type World;
+table BlockBuf {
+  x: uint16;
+  y: uint16;
+  block_type: BlockType;
+}
+
+table WorldBuf {
+  // Dimensions of the world.
+  width: uint16;
+  height: uint16;
+}
+
+root_type WorldBuf;
 

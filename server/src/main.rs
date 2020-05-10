@@ -9,6 +9,12 @@ use async_std::task;
 use futures::prelude::*;
 use tungstenite::Message;
 
+use schema::message_generated::{
+    VisibleStateBuf,
+    VisibleStateBufArgs, 
+    get_root_as_visible_state_buf
+};
+
 async fn handle_client(stream: TcpStream, my: Arc<Vec<u8>>) -> anyhow::Result<()> {
     let mut ws_stream = async_tungstenite::accept_async(stream).await?;
 
@@ -17,8 +23,11 @@ async fn handle_client(stream: TcpStream, my: Arc<Vec<u8>>) -> anyhow::Result<()
     let tick_rate = time::Duration::from_millis(1000 / 60);
     let ticks = 3 * 60;
 
+    let world = get_root_as_visible_state_buf(my.as_slice());
+
     loop {
         ws_stream.send(Message::Binary(my.to_vec())).await?;
+        println!("{:?}", world.blocks().unwrap().len());
         for i in 0..ticks {
             let pos: f64 = (x_end / f64::from(ticks)) * f64::from(i);
             ws_stream.send(Message::Text(pos.to_string())).await?;
@@ -30,16 +39,27 @@ async fn handle_client(stream: TcpStream, my: Arc<Vec<u8>>) -> anyhow::Result<()
 async fn run() -> anyhow::Result<()> {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let mut my_world = World::new(69, 420);
-    my_world.add_block(Block::new(DiscretePos(0, 0), BlockType::DESTRUCTIBLE));
-    my_world.add_block(Block::new(DiscretePos(1, 0), BlockType::INDESTRUCTIBLE));
+    my_world.add_block(Block::new(DiscretePos::new(0, 0), BlockType::Destructible));
+    my_world.add_block(Block::new(DiscretePos::new(1, 0), BlockType::Indestructible));
 
-    let world_arc = Arc::new(my_world.to_fb_bytes(&mut builder));
+    builder.reset();
+    let world_buf = Some(my_world.add_world_to_fb(&mut builder)); 
+    let blocks_buf = Some(my_world.add_blocks_to_fb(&mut builder));
+    let state = VisibleStateBuf::create(
+        &mut builder,
+        &VisibleStateBufArgs {
+            world: world_buf,
+            blocks: blocks_buf,
+        }
+    );
+    builder.finish(state, None);
+    let state_arc = Arc::new(builder.finished_data().to_vec());
 
     let server = TcpListener::bind("127.0.0.1:9001").await?;
     println!("Starting server");
     while let Ok((stream, address)) = server.accept().await {
         println!("Received on address {}", address);
-        let w = world_arc.clone();
+        let w = state_arc.clone();
         task::spawn(handle_client(stream, w));
     }
     Ok(())

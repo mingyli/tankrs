@@ -1,13 +1,19 @@
 use flatbuffers::FlatBufferBuilder;
-use schema::world_generated;
+use flatbuffers::{ForwardsUOffset, Vector, WIPOffset};
+use schema::world_generated::{BlockBuf, BlockBufArgs, WorldBuf, WorldBufArgs};
+
+pub use schema::world_generated::BlockType;
 
 #[derive(Debug)]
-pub struct DiscretePos(pub u16, pub u16);
+pub struct DiscretePos {
+    x: u16,
+    y: u16,
+}
 
-#[derive(Debug)]
-pub enum BlockType {
-    DESTRUCTIBLE,
-    INDESTRUCTIBLE,
+impl DiscretePos {
+    pub fn new(x: u16, y: u16) -> DiscretePos {
+        DiscretePos { x, y }
+    }
 }
 
 #[derive(Debug)]
@@ -15,6 +21,7 @@ pub struct Block {
     // The position of the lower left corner of this block in the coordinate
     // frame.
     position: DiscretePos,
+
     // The type of block this represents.
     block_type: BlockType,
 }
@@ -34,6 +41,17 @@ impl Block {
             block_type,
         }
     }
+
+    pub fn add_to_fb<'a>(&self, builder: &mut FlatBufferBuilder<'a>) -> WIPOffset<BlockBuf<'a>> {
+        BlockBuf::create(
+            builder,
+            &BlockBufArgs {
+                x: self.position.x,
+                y: self.position.y,
+                block_type: self.block_type,
+            },
+        )
+    }
 }
 
 impl World {
@@ -45,22 +63,33 @@ impl World {
         }
     }
 
-    pub fn to_fb_bytes(&self, builder: &mut FlatBufferBuilder) -> Vec<u8> {
-        builder.reset();
+    pub fn add_block(&mut self, block: Block) {
+        self.blocks.push(block);
+    }
 
-        let world = world_generated::World::create(
+    pub fn add_world_to_fb<'a>(
+        &self,
+        builder: &mut FlatBufferBuilder<'a>,
+    ) -> WIPOffset<WorldBuf<'a>> {
+        WorldBuf::create(
             builder,
-            &world_generated::WorldArgs {
+            &WorldBufArgs {
                 width: self.width,
                 height: self.height,
             },
-        );
-
-        builder.finish(world, None);
-        builder.finished_data().to_vec()
+        )
     }
 
-    pub fn add_block(&mut self, block: Block) {
-        self.blocks.push(block);
+    pub fn add_blocks_to_fb<'a>(
+        &self,
+        builder: &mut FlatBufferBuilder<'a>,
+    ) -> WIPOffset<Vector<'a, ForwardsUOffset<BlockBuf<'a>>>> {
+        let mut vec = Vec::new();
+
+        for block in &self.blocks {
+            vec.push(block.add_to_fb(builder));
+        }
+
+        builder.create_vector(vec.as_slice())
     }
 }

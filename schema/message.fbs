@@ -1,0 +1,10 @@
+include "world.fbs";
+
+union MessageBuf { VisibleStateBuf }
+
+table VisibleStateBuf {
+  world: WorldBuf;
+  blocks: [BlockBuf];
+}
+
+root_type VisibleStateBuf;
