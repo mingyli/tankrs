@@ -14,7 +14,7 @@ fn main() {
         lang: "ts",
         inputs: &[Path::new("../world.fbs")],
         out_dir: Path::new("../typescript/"),
-        ..Default::default()
+        ..flatc_rust::Args::default()
     })
     .expect("flatc failed to compile the flatbuffers for typescript");
 }
