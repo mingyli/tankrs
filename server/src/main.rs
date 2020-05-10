@@ -69,10 +69,17 @@ async fn listen(
     while let Some(message) = incoming.next().await {
         let message = message?;
         actions.lock().await.push_back(format!("{}", message));
-        if message.is_text() || message.is_binary() {
-            println!("Received: {:?}", message);
-        } else if message.is_close() {
-            break;
+        match message {
+            Message::Text(_) | Message::Binary(_) => {
+                println!("Received: {:?}", message);
+            }
+            Message::Close(_) => {
+                println!("Input stream ended.");
+                break;
+            }
+            _ => {
+                println!("Ignoring message {:?}", message);
+            }
         }
     }
     Ok(())
