@@ -10,9 +10,7 @@ use futures::prelude::*;
 use tungstenite::Message;
 
 use schema::message_generated::{
-    VisibleStateBuf,
-    VisibleStateBufArgs, 
-    get_root_as_visible_state_buf
+    get_root_as_visible_state_buf, VisibleStateBuf, VisibleStateBufArgs,
 };
 
 async fn handle_client(stream: TcpStream, my: Arc<Vec<u8>>) -> anyhow::Result<()> {
@@ -40,17 +38,20 @@ async fn run() -> anyhow::Result<()> {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let mut my_world = World::new(69, 420);
     my_world.add_block(Block::new(DiscretePos::new(0, 0), BlockType::Destructible));
-    my_world.add_block(Block::new(DiscretePos::new(1, 0), BlockType::Indestructible));
+    my_world.add_block(Block::new(
+        DiscretePos::new(1, 0),
+        BlockType::Indestructible,
+    ));
 
     builder.reset();
-    let world_buf = Some(my_world.add_world_to_fb(&mut builder)); 
+    let world_buf = Some(my_world.add_world_to_fb(&mut builder));
     let blocks_buf = Some(my_world.add_blocks_to_fb(&mut builder));
     let state = VisibleStateBuf::create(
         &mut builder,
         &VisibleStateBufArgs {
             world: world_buf,
             blocks: blocks_buf,
-        }
+        },
     );
     builder.finish(state, None);
     let state_arc = Arc::new(builder.finished_data().to_vec());

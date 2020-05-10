@@ -1,7 +1,7 @@
 use tungstenite::{connect, Message};
 use url::Url;
 
-use schema::world_generated::get_root_as_world;
+use schema::world_generated::get_root_as_world_buf;
 
 fn main() {
     let (mut socket, response) =
@@ -22,7 +22,7 @@ fn main() {
         println!("Received: {:?}", msg);
         match msg {
             Message::Binary(buffer) => {
-                let world = get_root_as_world(&buffer);
+                let world = get_root_as_world_buf(&buffer);
                 println!(
                     "My world has width {} and height {}.",
                     world.width(),
