@@ -38,10 +38,7 @@ async fn handle_client(
     // Listen for and enqueue actions from client.
     let listener = listen(incoming, actions);
 
-    futures::pin_mut!(publisher);
-    futures::pin_mut!(listener);
-
-    futures::future::select(publisher, listener).await;
+    futures::future::select(Box::pin(publisher), Box::pin(listener)).await;
 
     println!("Peer disconnected: {}", address);
     peers.lock().await.remove(&address);
