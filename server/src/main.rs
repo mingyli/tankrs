@@ -64,8 +64,7 @@ async fn publish(
 
 async fn listen<T>(mut incoming: T, actions: ActionQueue) -> anyhow::Result<()>
 where
-    T: stream::Stream<Item = Result<Message, tungstenite::Error>>,
-    T: std::marker::Unpin,
+    T: stream::Stream<Item = Result<Message, tungstenite::Error>> + std::marker::Unpin,
 {
     while let Some(message) = incoming.next().await {
         let message = message?;
@@ -141,7 +140,7 @@ mod tests {
             Ok(Message::Text("hi".to_string())),
             Ok(Message::Close(None)),
             Ok(Message::Text("bye".to_string())),
-            ]);
+        ]);
         let actions = ActionQueue::new(Mutex::new(VecDeque::<Action>::new()));
         listen(stream, actions.clone()).await?;
         assert_eq!(*actions.lock().await, vec!["hi"]);
