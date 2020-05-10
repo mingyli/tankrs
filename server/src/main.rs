@@ -62,15 +62,16 @@ async fn publish(
     }
 }
 
-async fn listen(
-    mut incoming: stream::SplitStream<WebSocketStream<TcpStream>>,
-    actions: ActionQueue,
-) -> anyhow::Result<()> {
+async fn listen<T>(mut incoming: T, actions: ActionQueue) -> anyhow::Result<()>
+where
+    T: stream::Stream<Item = Result<Message, tungstenite::Error>>,
+    T: std::marker::Unpin,
+{
     while let Some(message) = incoming.next().await {
         let message = message?;
-        actions.lock().await.push_back(format!("{}", message));
         match message {
             Message::Text(_) | Message::Binary(_) => {
+                actions.lock().await.push_back(format!("{}", message));
                 println!("Received: {:?}", message);
             }
             Message::Close(_) => {
@@ -129,4 +130,21 @@ async fn run() -> anyhow::Result<()> {
 
 fn main() -> anyhow::Result<()> {
     task::block_on(run())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[async_std::test]
+    async fn test_listen() -> anyhow::Result<()> {
+        let stream = stream::iter(vec![
+            Ok(Message::Text("hi".to_string())),
+            Ok(Message::Close(None)),
+            Ok(Message::Text("bye".to_string())),
+            ]);
+        let actions = ActionQueue::new(Mutex::new(VecDeque::<Action>::new()));
+        listen(stream, actions.clone()).await?;
+        assert_eq!(*actions.lock().await, vec!["hi"]);
+        Ok(())
+    }
 }
