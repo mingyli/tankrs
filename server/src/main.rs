@@ -5,7 +5,6 @@ use std::time;
 use async_std::net::{TcpListener, TcpStream};
 use async_std::sync::{Arc, Mutex};
 use async_std::task;
-use async_tungstenite::WebSocketStream;
 use futures::{stream, SinkExt, StreamExt};
 use tungstenite::Message;
 
@@ -29,14 +28,14 @@ async fn handle_client(
 
     peers.lock().await.insert(address);
 
-    let (outgoing, incoming) = ws_stream.split();
+    let (mut outgoing, mut incoming) = ws_stream.split();
 
     // Spawn task to publish world state.
     // TODO: Publish to clients in batch instead.
-    let publisher = publish(outgoing, world_state, peers.clone());
+    let publisher = publish(&mut outgoing, world_state, peers.clone());
 
     // Listen for and enqueue actions from client.
-    let listener = listen(incoming, actions);
+    let listener = listen(&mut incoming, actions);
 
     futures::future::select(Box::pin(publisher), Box::pin(listener)).await;
 
@@ -45,16 +44,17 @@ async fn handle_client(
     Ok(())
 }
 
-async fn publish(
-    mut outgoing: stream::SplitSink<WebSocketStream<TcpStream>, Message>,
-    world_state: WorldState,
-    peers: Peers,
-) -> anyhow::Result<()> {
+// Publish world state at a regular interval.
+async fn publish<T>(outgoing: &mut T, world_state: WorldState, peers: Peers) -> anyhow::Result<()>
+where
+    T: futures::Sink<Message> + std::marker::Unpin,
+    T::Error: std::error::Error + Send + Sync + 'static,
+{
     loop {
         outgoing.send(Message::Binary(world_state.to_vec())).await?;
         outgoing
             .send(Message::Text(format!(
-                "Here are the peers connected to server: {:?}",
+                "Here are the peers connected to the server: {:?}",
                 peers.lock().await
             )))
             .await?;
@@ -62,7 +62,8 @@ async fn publish(
     }
 }
 
-async fn listen<T>(mut incoming: T, actions: ActionQueue) -> anyhow::Result<()>
+// Listen for and enqueue actions from client.
+async fn listen<T>(incoming: &mut T, actions: ActionQueue) -> anyhow::Result<()>
 where
     T: stream::Stream<Item = Result<Message, tungstenite::Error>> + std::marker::Unpin,
 {
@@ -136,14 +137,47 @@ mod tests {
     use super::*;
     #[async_std::test]
     async fn test_listen() -> anyhow::Result<()> {
-        let stream = stream::iter(vec![
+        let mut stream = stream::iter(vec![
             Ok(Message::Text("hi".to_string())),
             Ok(Message::Close(None)),
             Ok(Message::Text("bye".to_string())),
         ]);
         let actions = ActionQueue::new(Mutex::new(VecDeque::<Action>::new()));
-        listen(stream, actions.clone()).await?;
+        listen(&mut stream, actions.clone()).await?;
         assert_eq!(*actions.lock().await, vec!["hi"]);
+        Ok(())
+    }
+
+    #[async_std::test]
+    async fn test_publish() -> anyhow::Result<()> {
+        let mut sink = VecDeque::new();
+        let world = WorldState::new(vec![0u8, 1]);
+        let peers = [SocketAddr::new(
+            std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)),
+            69,
+        )]
+        .iter()
+        .cloned()
+        .collect();
+        let peers = Peers::new(Mutex::new(peers));
+        let publish_future = publish(&mut sink, world.clone(), peers.clone());
+        let timeout = time::Duration::from_secs_f32(1.5);
+        assert!(async_std::future::timeout(timeout, publish_future)
+            .await
+            .is_err());
+        assert_eq!(
+            sink,
+            vec![
+                Message::Binary(vec![0, 1]),
+                Message::Text(
+                    "Here are the peers connected to the server: {V4(127.0.0.1:69)}".to_string()
+                ),
+                Message::Binary(vec![0, 1]),
+                Message::Text(
+                    "Here are the peers connected to the server: {V4(127.0.0.1:69)}".to_string()
+                ),
+            ]
+        );
         Ok(())
     }
 }
