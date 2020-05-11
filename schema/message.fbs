@@ -1,9 +1,14 @@
 include "world.fbs";
 
-union MessageBuf { VisibleStateBuf }
+union MessageBuf { InitialGameBuf, VisibleStateBuf }
+
+// This message is sent once at the start of the game. Contains state that
+// remains constant for the duration of the game.
+table InitialGameBuf {
+  world: WorldBuf;
+}
 
 table VisibleStateBuf {
-  world: WorldBuf;
   blocks: [BlockBuf];
 }
 
