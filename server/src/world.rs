@@ -1,3 +1,5 @@
+// TODO(mluogh): remove after we actually start using these
+#![allow(dead_code)]
 use flatbuffers::FlatBufferBuilder;
 use flatbuffers::{ForwardsUOffset, Vector, WIPOffset};
 pub use schema::world_generated::BlockType;
