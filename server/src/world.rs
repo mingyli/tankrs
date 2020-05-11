@@ -39,12 +39,15 @@ pub struct World {
 impl Block {
     pub fn new(x: u16, y: u16, block_type: BlockType) -> Block {
         Block {
-            position: Position::new(x as f32, y as f32),
+            position: Position::new(f32::from(x), f32::from(y)),
             block_type,
         }
     }
 
     pub fn add_to_fb<'a>(&self, builder: &mut FlatBufferBuilder<'a>) -> WIPOffset<BlockBuf<'a>> {
+        // We know the block's position always actually a u16. These interactions will never
+        // happen.
+        #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
         BlockBuf::create(
             builder,
             &BlockBufArgs {
