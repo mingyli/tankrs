@@ -8,8 +8,6 @@ use async_std::task;
 use futures::{stream, SinkExt, StreamExt};
 use tungstenite::Message;
 
-use schema::world_generated::{World, WorldArgs};
-
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
 type WorldState = Arc<Vec<u8>>;
 type Action = String;
@@ -87,18 +85,6 @@ where
 }
 
 async fn run() -> anyhow::Result<()> {
-    let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
-    let world = World::create(
-        &mut builder,
-        &WorldArgs {
-            width: 40,
-            height: 30,
-        },
-    );
-    builder.finish(world, None);
-    let buffer = builder.finished_data().to_vec();
-    let world = WorldState::new(buffer);
-
     let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
     println!("Starting server");
     let peers = Peers::new(Mutex::new(HashSet::new()));
@@ -113,6 +99,8 @@ async fn run() -> anyhow::Result<()> {
             task::sleep(time::Duration::from_secs(1)).await;
         }
     });
+
+    let world = Arc::new(Vec::new());
 
     // Listen for new WebSocket connections.
     while let Ok((stream, address)) = tcp_listener.accept().await {

@@ -1,10 +1,23 @@
 // The definition for the base game state.
 
-table World {
-    // Dimensions of the world.
-    width: uint16;
-    height: uint16;
+struct Vec2 {
+  x: float32;
+  y: float32;
 }
 
-root_type World;
+table Tank {
+  pos: Vec2;
+}
+
+table GameParams {
+  width: uint16;
+  height: uint16;
+}
+
+table WorldState {
+  player: Tank;
+  others: [Tank];
+}
+
+root_type WorldState;
 

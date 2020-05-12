@@ -1,0 +1,12 @@
+enum Movement : byte {
+  Up,
+  Down,
+  Left,
+  Right,
+}
+
+table ActionRoot {
+  movement: Movement;
+}
+
+root_type ActionRoot;
