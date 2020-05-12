@@ -1,9 +1,15 @@
 // The definition for the base game state.
 
+table Block {
+    x: float;
+}
+
 table World {
     // Dimensions of the world.
     width: uint16;
     height: uint16;
+
+    block: Block;
 }
 
 root_type World;
