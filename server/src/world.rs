@@ -5,6 +5,11 @@ use flatbuffers::{ForwardsUOffset, Vector, WIPOffset};
 pub use schema::world_generated::BlockType;
 use schema::world_generated::{BlockBuf, BlockBufArgs, WorldBuf, WorldBufArgs};
 
+pub trait Serializable<'a> {
+    type Buf;
+    fn add_to_fb(&self, builder: &mut FlatBufferBuilder<'a>) -> WIPOffset<Self::Buf>;
+}
+
 #[derive(Debug)]
 pub struct Position {
     x: f32,
@@ -27,13 +32,15 @@ pub struct Block {
     block_type: BlockType,
 }
 
+type Blocks = Vec<Block>;
+
 #[derive(Debug)]
 pub struct World {
     // The width and height of this world in our coordinate frame.
     width: u16,
     height: u16,
 
-    blocks: Vec<Block>,
+    blocks: Blocks,
 }
 
 impl Block {
@@ -43,8 +50,11 @@ impl Block {
             block_type,
         }
     }
+}
 
-    pub fn add_to_fb<'a>(&self, builder: &mut FlatBufferBuilder<'a>) -> WIPOffset<BlockBuf<'a>> {
+impl<'a> Serializable<'a> for Block {
+    type Buf = BlockBuf<'a>;
+    fn add_to_fb(&self, builder: &mut FlatBufferBuilder<'a>) -> WIPOffset<BlockBuf<'a>> {
         // We know the block's position always actually a u16. These interactions will never
         // happen.
         #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
@@ -56,6 +66,22 @@ impl Block {
                 block_type: self.block_type,
             },
         )
+    }
+}
+
+impl<'a> Serializable<'a> for Blocks {
+    type Buf = Vector<'a, ForwardsUOffset<BlockBuf<'a>>>;
+    fn add_to_fb(
+        &self,
+        builder: &mut FlatBufferBuilder<'a>,
+    ) -> WIPOffset<Vector<'a, ForwardsUOffset<BlockBuf<'a>>>> {
+        let mut vec = Vec::new();
+
+        for block in self.iter() {
+            vec.push(block.add_to_fb(builder));
+        }
+
+        builder.create_vector(vec.as_slice())
     }
 }
 
@@ -80,10 +106,14 @@ impl World {
         self.blocks.push(block);
     }
 
-    pub fn add_world_to_fb<'a>(
-        &self,
-        builder: &mut FlatBufferBuilder<'a>,
-    ) -> WIPOffset<WorldBuf<'a>> {
+    pub fn view_blocks(&self) -> &Blocks {
+        &self.blocks
+    }
+}
+
+impl<'a> Serializable<'a> for World {
+    type Buf = WorldBuf<'a>;
+    fn add_to_fb(&self, builder: &mut FlatBufferBuilder<'a>) -> WIPOffset<WorldBuf<'a>> {
         WorldBuf::create(
             builder,
             &WorldBufArgs {
@@ -91,19 +121,6 @@ impl World {
                 height: self.height,
             },
         )
-    }
-
-    pub fn add_blocks_to_fb<'a>(
-        &self,
-        builder: &mut FlatBufferBuilder<'a>,
-    ) -> WIPOffset<Vector<'a, ForwardsUOffset<BlockBuf<'a>>>> {
-        let mut vec = Vec::new();
-
-        for block in &self.blocks {
-            vec.push(block.add_to_fb(builder));
-        }
-
-        builder.create_vector(vec.as_slice())
     }
 }
 
@@ -120,7 +137,7 @@ mod tests {
     fn world_can_be_serialized() {
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
         let my_world = World::new(69, 420);
-        let world_buf = my_world.add_world_to_fb(&mut builder);
+        let world_buf = my_world.add_to_fb(&mut builder);
         builder.finish(world_buf, None);
 
         let serialized_world = get_root_as_world_buf(builder.finished_data());
@@ -136,7 +153,7 @@ mod tests {
         my_world.add_block(Block::new(0, 0, BlockType::Destructible));
         my_world.add_block(Block::new(0, 1, BlockType::Indestructible));
 
-        let blocks_buf = Some(my_world.add_blocks_to_fb(&mut builder));
+        let blocks_buf = Some(my_world.view_blocks().add_to_fb(&mut builder));
 
         let state =
             VisibleStateBuf::create(&mut builder, &VisibleStateBufArgs { blocks: blocks_buf });

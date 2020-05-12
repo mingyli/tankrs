@@ -3,7 +3,7 @@ mod world;
 use std::collections::{HashSet, VecDeque};
 use std::net::SocketAddr;
 use std::time;
-use world::World;
+use world::{Serializable, World};
 
 use async_std::net::{TcpListener, TcpStream};
 use async_std::sync::{Arc, Mutex};
@@ -90,7 +90,7 @@ where
 async fn run() -> anyhow::Result<()> {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let world = World::new(250, 250);
-    let world = world.add_world_to_fb(&mut builder);
+    let world = world.add_to_fb(&mut builder);
     builder.finish(world, None);
     let buffer = builder.finished_data().to_vec();
     let world = WorldState::new(buffer);
