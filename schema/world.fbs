@@ -1,5 +1,6 @@
 include "math.fbs";
 
+// The message contains all the relevant user-facing information about tanks.
 table Tank {
   pos: Vec2;
 }
@@ -11,6 +12,7 @@ table GameParams {
   height: uint16;
 }
 
+// This message should be sent every tick, and represents the evolving game state.
 table WorldState {
   player: Tank;
   others: [Tank];

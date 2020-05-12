@@ -1,3 +1,4 @@
+// All we need for v0 is 4 way movement.
 enum Movement : byte {
   Up,
   Down,
@@ -5,6 +6,7 @@ enum Movement : byte {
   Right,
 }
 
+// TODO: add other action types to this (e.g. shooting).
 table ActionRoot {
   movement: Movement;
 }
