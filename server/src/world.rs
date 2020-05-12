@@ -24,7 +24,10 @@ impl Serializable for World {
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
         let block = world_generated::Block::create(
             &mut builder,
-            &world_generated::BlockArgs { x: self.block.x },
+            &world_generated::BlockArgs {
+                x: self.block.x,
+                v: Some(&world_generated::MyVec::new(1.0, 2.0)),
+            },
         );
         let world = world_generated::World::create(
             &mut builder,
@@ -34,7 +37,14 @@ impl Serializable for World {
                 block: Some(block),
             },
         );
-        builder.finish(world, None);
+        let message = world_generated::Message::create(
+            &mut builder,
+            &world_generated::MessageArgs {
+                thing_type: world_generated::Thing::World,
+                thing: Some(world.as_union_value()),
+            }
+        );
+        builder.finish(message, None);
         builder.finished_data().to_vec()
     }
 }

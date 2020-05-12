@@ -1,7 +1,13 @@
 // The definition for the base game state.
 
+struct MyVec {
+    a: float;
+    b: float;
+}
+
 table Block {
     x: float;
+    v: MyVec;
 }
 
 table World {
@@ -12,5 +18,13 @@ table World {
     block: Block;
 }
 
-root_type World;
+union Thing {
+    World
+}
+
+table Message {
+    thing: Thing;
+}
+
+root_type Message;
 
