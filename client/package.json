@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "type-check": "tsc --noEmit",
-    "type-check:watch": "npm run type-check -- --watch",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "npm run type-check -- --watch",
     "build": "babel src --out-dir js --extensions \".ts,.tsx\" --source-maps inline"
   },
   "author": "",
