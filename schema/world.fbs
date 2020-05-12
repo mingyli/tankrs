@@ -16,5 +16,3 @@ table WorldState {
   others: [Tank];
 }
 
-root_type WorldState;
-
