@@ -2,9 +2,6 @@ include "world.fbs";
 
 union Message { WorldState, GameParams }
 
-// This message is sent once at the start of the game. Contains state that
-// remains constant for the duration of the game.
-
 table MessageRoot {
   message: Message;
 }

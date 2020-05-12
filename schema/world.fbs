@@ -9,6 +9,8 @@ table Tank {
   pos: Vec2;
 }
 
+// This message is sent once at the start of the game. Contains state that
+// remains constant for the duration of the game.
 table GameParams {
   width: uint16;
   height: uint16;
