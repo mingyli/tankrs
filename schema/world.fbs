@@ -1,9 +1,4 @@
-// The definition for the base game state.
-
-struct Vec2 {
-  x: float32;
-  y: float32;
-}
+include "math.fbs";
 
 table Tank {
   pos: Vec2;

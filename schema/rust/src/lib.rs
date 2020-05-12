@@ -7,3 +7,6 @@ pub mod messages_generated;
 
 #[rustfmt::skip]
 pub mod actions_generated;
+
+#[rustfmt::skip]
+pub mod math_generated;
