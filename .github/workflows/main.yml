@@ -161,8 +161,6 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: pwd
-      working-directory: ./client
     - run: npm install
       working-directory: ./client
     - run: npm run typecheck
