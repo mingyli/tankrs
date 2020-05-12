@@ -160,6 +160,8 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
+    - run: cd client
+    - run: pwd
     - run: npm install
     - run: npm run type-check
     - run: npm run build 
