@@ -164,6 +164,10 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: pwd
+      working-directory: ${{ working-directory }}
     - run: npm install
+      working-directory: ${{ working-directory }}
     - run: npm run type-check
+      working-directory: ${{ working-directory }}
     - run: npm run build 
+      working-directory: ${{ working-directory }}
