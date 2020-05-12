@@ -1,10 +1,20 @@
-// The definition for the base game state.
+include "math.fbs";
 
-table World {
-    // Dimensions of the world.
-    width: uint16;
-    height: uint16;
+// The message contains all the relevant user-facing information about tanks.
+table Tank {
+  pos: Vec2;
 }
 
-root_type World;
+// This message is sent once at the start of the game. Contains state that
+// remains constant for the duration of the game.
+table GameParams {
+  width: uint16;
+  height: uint16;
+}
+
+// This message should be sent every tick, and represents the evolving game state.
+table WorldState {
+  player: Tank;
+  others: [Tank];
+}
 
