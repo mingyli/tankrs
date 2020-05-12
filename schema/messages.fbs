@@ -1,0 +1,11 @@
+include "world.fbs";
+
+// This is a union of all the messages that need to be sent over WebSocket. This allows us to
+// demux message types on the client.
+union Message { WorldState, GameParams }
+
+table MessageRoot {
+  message: Message;
+}
+
+root_type MessageRoot;
