@@ -8,10 +8,13 @@ use async_std::task;
 use futures::{stream, SinkExt, StreamExt};
 use tungstenite::Message;
 
-use schema::world_generated::{World, WorldArgs};
+mod serialize;
+mod world;
+use serialize::Serializable;
+use world::World;
 
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
-type WorldState = Arc<Vec<u8>>;
+type WorldState = Arc<World>;
 type Action = String;
 type ActionQueue = Arc<Mutex<VecDeque<Action>>>;
 
@@ -51,7 +54,9 @@ where
     T::Error: std::error::Error + Send + Sync + 'static,
 {
     loop {
-        outgoing.send(Message::Binary(world_state.to_vec())).await?;
+        outgoing
+            .send(Message::Binary(world_state.serialize()))
+            .await?;
         outgoing
             .send(Message::Text(format!(
                 "Here are the peers connected to the server: {:?}",
@@ -87,17 +92,7 @@ where
 }
 
 async fn run() -> anyhow::Result<()> {
-    let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
-    let world = World::create(
-        &mut builder,
-        &WorldArgs {
-            width: 40,
-            height: 30,
-        },
-    );
-    builder.finish(world, None);
-    let buffer = builder.finished_data().to_vec();
-    let world = WorldState::new(buffer);
+    let world = Arc::new(World::new(40, 30));
 
     let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
     println!("Starting server");
@@ -151,7 +146,7 @@ mod tests {
     #[async_std::test]
     async fn test_publish() -> anyhow::Result<()> {
         let mut sink = VecDeque::new();
-        let world = WorldState::new(vec![0u8, 1]);
+        let world = WorldState::new(World::new(69, 420));
         let peers = [SocketAddr::new(
             std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)),
             69,
@@ -165,14 +160,15 @@ mod tests {
         assert!(async_std::future::timeout(timeout, publish_future)
             .await
             .is_err());
+        let expected_bytes = world.serialize();
         assert_eq!(
             sink,
             vec![
-                Message::Binary(vec![0, 1]),
+                Message::Binary(expected_bytes.clone()),
                 Message::Text(
                     "Here are the peers connected to the server: {V4(127.0.0.1:69)}".to_string()
                 ),
-                Message::Binary(vec![0, 1]),
+                Message::Binary(expected_bytes.clone()),
                 Message::Text(
                     "Here are the peers connected to the server: {V4(127.0.0.1:69)}".to_string()
                 ),
