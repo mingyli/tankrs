@@ -165,7 +165,7 @@ jobs:
       working-directory: ./client
     - run: npm install
       working-directory: ./client
-    - run: npm run type-check
+    - run: npm run typecheck
       working-directory: ./client
     - run: npm run build 
       working-directory: ./client
