@@ -42,7 +42,7 @@ impl Serializable for World {
             &world_generated::MessageArgs {
                 thing_type: world_generated::Thing::World,
                 thing: Some(world.as_union_value()),
-            }
+            },
         );
         builder.finish(message, None);
         builder.finished_data().to_vec()
