@@ -6,6 +6,7 @@ use async_std::net::{TcpListener, TcpStream};
 use async_std::sync::{Arc, Mutex};
 use async_std::task;
 use futures::{stream, SinkExt, StreamExt};
+use log::{debug, info, warn};
 use tungstenite::Message;
 
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
@@ -20,7 +21,7 @@ async fn handle_client(
     peers: Peers,
     world_state: WorldState,
 ) -> anyhow::Result<()> {
-    println!("Handling client.");
+    info!("Handling client.");
 
     let ws_stream = async_tungstenite::accept_async(stream).await?;
 
@@ -37,7 +38,7 @@ async fn handle_client(
 
     futures::future::select(Box::pin(publisher), Box::pin(listener)).await;
 
-    println!("Peer disconnected: {}", address);
+    warn!("Peer disconnected: {}", address);
     peers.lock().await.remove(&address);
     Ok(())
 }
@@ -70,14 +71,14 @@ where
         match message {
             Message::Text(_) | Message::Binary(_) => {
                 actions.lock().await.push_back(format!("{}", message));
-                println!("Received: {:?}", message);
+                debug!("Received: {:?}", message);
             }
             Message::Close(_) => {
-                println!("Input stream ended.");
+                warn!("Input stream ended.");
                 break;
             }
             _ => {
-                println!("Ignoring message {:?}", message);
+                debug!("Ignoring message {:?}", message);
             }
         }
     }
@@ -85,8 +86,22 @@ where
 }
 
 async fn run() -> anyhow::Result<()> {
+    env_logger::builder()
+        .format(|buffer, record| {
+            use std::io::Write;
+            writeln!(
+                buffer,
+                "[{} {} {}:{}] {}",
+                buffer.timestamp(),
+                buffer.default_styled_level(record.level()),
+                record.file().unwrap_or("UNKNOWNFILE"),
+                record.line().unwrap_or_default(),
+                record.args()
+            )
+        })
+        .init();
     let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
-    println!("Starting server");
+    info!("Starting server");
     let peers = Peers::new(Mutex::new(HashSet::new()));
     let actions = ActionQueue::new(Mutex::new(VecDeque::<Action>::new()));
 
@@ -95,7 +110,7 @@ async fn run() -> anyhow::Result<()> {
     let actions_arc = actions.clone();
     task::spawn(async move {
         loop {
-            println!("Contents of action queue: {:?}", actions_arc.lock().await);
+            info!("Contents of action queue: {:?}", actions_arc.lock().await);
             task::sleep(time::Duration::from_secs(1)).await;
         }
     });
@@ -104,7 +119,7 @@ async fn run() -> anyhow::Result<()> {
 
     // Listen for new WebSocket connections.
     while let Ok((stream, address)) = tcp_listener.accept().await {
-        println!("Received on address {}", address);
+        debug!("Received on address {}", address);
         task::spawn(handle_client(
             stream,
             address,
