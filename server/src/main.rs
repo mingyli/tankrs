@@ -175,9 +175,9 @@ mod tests {
             Ok(Message::Close(None)),
             Ok(Message::Text("bye".to_string())),
         ]);
-        let actions = ActionQueue::new(Mutex::new(VecDeque::<Action>::new()));
+        let actions = ActionQueue::new(Mutex::new(VecDeque::<Buffer>::new()));
         listen(&mut stream, actions.clone()).await?;
-        assert_eq!(*actions.lock().await, vec!["hi"]);
+        assert_eq!(*actions.lock().await, VecDeque::<Vec<u8>>::new());
         Ok(())
     }
 

@@ -8,7 +8,7 @@ use schema::actions_generated;
 use schema::messages_generated::{self, get_root_as_message_root};
 
 async fn run() -> anyhow::Result<()> {
-    let (mut socket, response) = connect_async(Url::parse("ws://localhost:9001/socket")?).await?;
+    let (socket, response) = connect_async(Url::parse("ws://localhost:9001/socket")?).await?;
 
     println!("Connected to the server");
     println!("Response HTTP code: {}", response.status());
