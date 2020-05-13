@@ -9,10 +9,13 @@ use futures::{stream, SinkExt, StreamExt};
 use log::{debug, info, warn};
 use tungstenite::Message;
 
+use schema::actions_generated::get_root_as_action_root;
+use schema::{messages_generated, world_generated};
+
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
-type WorldState = Arc<Vec<u8>>;
-type Action = String;
-type ActionQueue = Arc<Mutex<VecDeque<Action>>>;
+type Buffer = Vec<u8>;
+type WorldState = Arc<Buffer>;
+type ActionQueue = Arc<Mutex<VecDeque<Buffer>>>;
 
 async fn handle_client(
     stream: TcpStream,
@@ -69,9 +72,11 @@ where
     while let Some(message) = incoming.next().await {
         let message = message?;
         match message {
-            Message::Text(_) | Message::Binary(_) => {
-                actions.lock().await.push_back(format!("{}", message));
-                debug!("Received: {:?}", message);
+            Message::Text(message) => {
+                warn!("Received text: {}", message);
+            }
+            Message::Binary(buffer) => {
+                actions.lock().await.push_back(buffer);
             }
             Message::Close(_) => {
                 warn!("Input stream ended.");
@@ -103,19 +108,44 @@ async fn run() -> anyhow::Result<()> {
     let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
     info!("Starting server");
     let peers = Peers::new(Mutex::new(HashSet::new()));
-    let actions = ActionQueue::new(Mutex::new(VecDeque::<Action>::new()));
+    let actions = ActionQueue::new(Mutex::new(VecDeque::<Vec<u8>>::new()));
 
     // Spawn task to consume actions from action queue.
     // TODO: Consume actions in non-blocking fashion instead of displaying actions periodically.
     let actions_arc = actions.clone();
     task::spawn(async move {
         loop {
-            info!("Contents of action queue: {:?}", actions_arc.lock().await);
+            info!("Clearing action queue...");
+            let actions = {
+                let mut guard = actions_arc.lock().await;
+                std::mem::replace(&mut *guard, VecDeque::new())
+            };
+            info!("Contents of action queue:");
+            for action in actions {
+                let action = get_root_as_action_root(action.as_slice());
+                info!("Action: {:?}", action.movement());
+            }
             task::sleep(time::Duration::from_secs(1)).await;
         }
     });
 
-    let world = Arc::new(Vec::new());
+    let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
+    let world = world_generated::WorldState::create(
+        &mut builder,
+        &world_generated::WorldStateArgs {
+            player: None,
+            others: None,
+        },
+    );
+    let message = messages_generated::MessageRoot::create(
+        &mut builder,
+        &messages_generated::MessageRootArgs {
+            message_type: messages_generated::Message::WorldState,
+            message: Some(world.as_union_value()),
+        },
+    );
+    builder.finish(message, None);
+    let world = Arc::new(builder.finished_data().to_vec());
 
     // Listen for new WebSocket connections.
     while let Ok((stream, address)) = tcp_listener.accept().await {
