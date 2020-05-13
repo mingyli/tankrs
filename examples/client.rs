@@ -1,8 +1,6 @@
 use tungstenite::{connect, Message};
 use url::Url;
 
-use schema::world_generated::get_root_as_world;
-
 fn main() {
     let (mut socket, response) =
         connect(Url::parse("ws://localhost:9001/socket").unwrap()).expect("Can't connect");
@@ -22,12 +20,7 @@ fn main() {
         println!("Received: {:?}", msg);
         match msg {
             Message::Binary(buffer) => {
-                let world = get_root_as_world(&buffer);
-                println!(
-                    "My world has width {} and height {}.",
-                    world.width(),
-                    world.height()
-                );
+                println!("Binary! {:?}", buffer);
             }
             Message::Text(text) => {
                 println!("Received text: {}", text);
