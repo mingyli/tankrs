@@ -108,7 +108,7 @@ async fn run() -> anyhow::Result<()> {
     let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
     info!("Starting server");
     let peers = Peers::new(Mutex::new(HashSet::new()));
-    let actions = ActionQueue::new(Mutex::new(VecDeque::<Vec<u8>>::new()));
+    let actions = ActionQueue::new(Mutex::new(VecDeque::<Buffer>::new()));
 
     // Spawn task to consume actions from action queue.
     // TODO: Consume actions in non-blocking fashion instead of displaying actions periodically.
@@ -177,7 +177,7 @@ mod tests {
         ]);
         let actions = ActionQueue::new(Mutex::new(VecDeque::<Buffer>::new()));
         listen(&mut stream, actions.clone()).await?;
-        assert_eq!(*actions.lock().await, VecDeque::<Vec<u8>>::new());
+        assert_eq!(*actions.lock().await, VecDeque::<Buffer>::new());
         Ok(())
     }
 
