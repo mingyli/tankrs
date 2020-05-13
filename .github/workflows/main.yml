@@ -150,6 +150,8 @@ jobs:
   build-ts:
     name: Build Typescript
     runs-on: ubuntu-latest
+    env:
+      working-directory: ./client
 
     strategy:
       matrix:
@@ -162,8 +164,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm install
-      working-directory: ./client
+      working-directory: ${{env.working-directory}}
     - run: npm run typecheck
-      working-directory: ./client
+      working-directory: ${{env.working-directory}}
     - run: npm run build 
-      working-directory: ./client
+      working-directory: ${{env.working-directory}}
