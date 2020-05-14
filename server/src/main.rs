@@ -1,7 +1,3 @@
-mod math;
-mod serialization;
-mod world;
-
 use std::collections::{HashSet, VecDeque};
 use std::net::SocketAddr;
 use std::time;
@@ -15,8 +11,11 @@ use tungstenite::Message;
 
 use schema::actions_generated::get_root_as_action_root;
 
+mod math;
+mod serialization;
+mod world;
 use math::Position;
-use serialization::{Config, Serializable};
+use serialization::{Config, SerializableAsMessage};
 use world::{Tank, World};
 
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
@@ -143,7 +142,7 @@ async fn run() -> anyhow::Result<()> {
     world.add_tank(Tank::new(1, Position { x: 23.0, y: 54.0 }));
     world.add_tank(Tank::new(2, Position { x: 84.0, y: 34.0 }));
 
-    let world = Arc::new(world.serialize(&mut builder, &Config::new(0)));
+    let world = Arc::new(world.serialize(&mut builder, &Config::new(0)).unwrap());
 
     // Listen for new WebSocket connections.
     while let Ok((stream, address)) = tcp_listener.accept().await {

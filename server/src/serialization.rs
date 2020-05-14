@@ -1,15 +1,15 @@
+use anyhow::{anyhow, Result};
 use flatbuffers::{FlatBufferBuilder, ForwardsUOffset, Vector, WIPOffset};
+use log::error;
 
 use schema::math_generated;
 use schema::messages_generated;
 use schema::world_generated;
 
-use log::error;
-
 use crate::world::{Tank, World};
 
-pub trait Serializable {
-    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Vec<u8>;
+pub trait SerializableAsMessage {
+    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Vec<u8>>;
 }
 
 trait Flatbufferable<'a> {
@@ -22,12 +22,12 @@ trait Flatbufferable<'a> {
 }
 
 pub struct Config {
-    pub player: u16,
+    pub player_id: u16,
 }
 
 impl Config {
-    pub fn new(player: u16) -> Config {
-        Config { player }
+    pub fn new(player_id: u16) -> Config {
+        Config { player_id }
     }
 }
 
@@ -42,10 +42,7 @@ impl<'a> Flatbufferable<'a> for Tank {
         world_generated::Tank::create(
             builder,
             &world_generated::TankArgs {
-                pos: Some(&math_generated::Vec2::new(
-                    self.pos_ref().x,
-                    self.pos_ref().y,
-                )),
+                pos: Some(&math_generated::Vec2::new(self.pos().x, self.pos().y)),
             },
         )
     }
@@ -72,18 +69,24 @@ impl<'a> Flatbufferable<'a> for Vec<&Tank> {
     }
 }
 
-impl Serializable for World {
-    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Vec<u8> {
+impl SerializableAsMessage for World {
+    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Vec<u8>> {
         builder.reset();
 
         let (player, other_tanks): (Vec<&Tank>, Vec<&Tank>) = self
-            .tanks_ref()
+            .tanks()
             .iter()
-            .partition(|tank| tank.player() == config.player);
+            .partition(|tank| tank.player() == config.player_id);
 
         if player.len() != 1 {
-            error!("Could not find player in World.");
-            return Vec::new();
+            error!(
+                "There are {} players with id {}. Can't serialize world.",
+                player.len(),
+                config.player_id
+            );
+            return Err(anyhow!(
+                "Config does not specify unique player; can't serialize for schema."
+            ));
         }
 
         let player = player.get(0).unwrap().add_to_fb(builder, config);
@@ -106,7 +109,7 @@ impl Serializable for World {
         );
 
         builder.finish(message, None);
-        builder.finished_data().to_vec()
+        Ok(builder.finished_data().to_vec())
     }
 }
 
@@ -126,8 +129,8 @@ mod tests {
 
         let recovered_tank = get_root::<world_generated::Tank>(builder.finished_data());
 
-        assert_eq!(recovered_tank.pos().unwrap().x(), tank.pos_ref().x);
-        assert_eq!(recovered_tank.pos().unwrap().y(), tank.pos_ref().y);
+        assert_eq!(recovered_tank.pos().unwrap().x(), tank.pos().x);
+        assert_eq!(recovered_tank.pos().unwrap().y(), tank.pos().y);
     }
 
     #[test]
@@ -141,7 +144,7 @@ mod tests {
         world.add_tank(Tank::new(1, Position { x: 23.0, y: 54.0 }));
         world.add_tank(Tank::new(2, Position { x: 84.0, y: 34.0 }));
 
-        let world_as_bytes = world.serialize(&mut builder, &config);
+        let world_as_bytes = world.serialize(&mut builder, &config).unwrap();
 
         let message = get_root::<messages_generated::MessageRoot>(world_as_bytes.as_ref());
         assert_eq!(
@@ -152,15 +155,15 @@ mod tests {
 
         let player = recovered_world.player().unwrap();
         let others = recovered_world.others().unwrap();
-        let tanks = world.tanks_ref();
+        let tanks = world.tanks();
 
-        assert_eq!(player.pos().unwrap().x(), tanks[0].pos_ref().x);
-        assert_eq!(player.pos().unwrap().y(), tanks[0].pos_ref().y);
+        assert_eq!(player.pos().unwrap().x(), tanks[0].pos().x);
+        assert_eq!(player.pos().unwrap().y(), tanks[0].pos().y);
 
         assert_eq!(others.len(), 2);
-        assert_eq!(others.get(0).pos().unwrap().x(), tanks[1].pos_ref().x);
-        assert_eq!(others.get(0).pos().unwrap().y(), tanks[1].pos_ref().y);
-        assert_eq!(others.get(1).pos().unwrap().x(), tanks[2].pos_ref().x);
-        assert_eq!(others.get(1).pos().unwrap().y(), tanks[2].pos_ref().y);
+        assert_eq!(others.get(0).pos().unwrap().x(), tanks[1].pos().x);
+        assert_eq!(others.get(0).pos().unwrap().y(), tanks[1].pos().y);
+        assert_eq!(others.get(1).pos().unwrap().x(), tanks[2].pos().x);
+        assert_eq!(others.get(1).pos().unwrap().y(), tanks[2].pos().y);
     }
 }

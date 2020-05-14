@@ -15,8 +15,8 @@ impl Tank {
         self.player
     }
 
-    pub fn pos_ref(&self) -> &Position {
-        &self.pos
+    pub fn pos(&self) -> Position {
+        self.pos
     }
 
     pub fn new(player: u16, pos: Position) -> Tank {
@@ -34,7 +34,7 @@ impl World {
         self.tanks.push(tank);
     }
 
-    pub fn tanks_ref(&self) -> &Vec<Tank> {
+    pub fn tanks(&self) -> &Vec<Tank> {
         &self.tanks
     }
 }
