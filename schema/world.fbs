@@ -1,0 +1,19 @@
+include "math.fbs";
+
+// The message contains all the relevant user-facing information about tanks.
+table Tank {
+  pos: Vec2;
+}
+
+// This message is sent once at the start of the game. Contains state that
+// remains constant for the duration of the game.
+table GameParams {
+  width: uint16;
+  height: uint16;
+}
+
+// This message should be sent every tick, and represents the evolving game state.
+table WorldState {
+  player: Tank;
+  others: [Tank];
+}
