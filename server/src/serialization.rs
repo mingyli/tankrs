@@ -85,7 +85,7 @@ impl SerializableAsMessage for World {
 
         let player = player
             .first()
-            .ok_or(anyhow!("Player doesn't exist."))?
+            .ok_or_else(|| anyhow!("Player doesn't exist."))?
             .add_to_fb(builder, config);
         let other_tanks = other_tanks.add_to_fb(builder, config);
 
