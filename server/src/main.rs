@@ -10,7 +10,7 @@ use log::{debug, info, warn};
 use tungstenite::Message;
 
 use schema::actions_generated::get_root_as_action_root;
-use schema::{messages_generated, world_generated};
+use schema::{messages_generated};
 
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
 type Buffer = Vec<u8>;
@@ -130,17 +130,17 @@ async fn run() -> anyhow::Result<()> {
     });
 
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
-    let world = world_generated::fuck::WorldState::create(
+    let world = messages_generated::WorldState::create(
         &mut builder,
-        &world_generated::fuck::WorldStateArgs {
+        &messages_generated::WorldStateArgs {
             player: None,
             others: None,
         },
     );
-    let message = messages_generated::tankrs::MessageRoot::create(
+    let message = messages_generated::MessageRoot::create(
         &mut builder,
-        &messages_generated::tankrs::MessageRootArgs {
-            message_type: messages_generated::tankrs::Message::Fuck_WorldState,
+        &messages_generated::MessageRootArgs {
+            message_type: messages_generated::Message::WorldState,
             message: Some(world.as_union_value()),
         },
     );

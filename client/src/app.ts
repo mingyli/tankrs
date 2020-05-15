@@ -1,7 +1,5 @@
 import { flatbuffers } from "flatbuffers";
-import * as World from "./flatschema/world_generated";
-import * as Math from "./flatschema/math_generated";
-import * as Message from "./flatschema/messages_generated";
+import * as Messages from "./flatschema/messages_generated";
 
 // Point.
 class Point {
@@ -95,21 +93,24 @@ function init() {
     console.log("Received: ", data);
     if (typeof data == "object") {
       console.log("Received object, trying to parse into flatbuffer");
+
       const arrBuf = await data.arrayBuffer();
       const buf = new flatbuffers.ByteBuffer(new Uint8Array(arrBuf));
-      const message = Message.Tankrs.MessageRoot.getRootAsMessageRoot(buf);
-      if (message.messageType() == Message.Tankrs.Message.GameParams) {
-        // Do some shit.
-      } else if (message.messageType() == Message.Tankrs.Message.WorldState) {
-        const world = message.message(new World.Tankrs.WorldState())!;
+      const message = Messages.MessageRoot.getRootAsMessageRoot(buf);
+      if (message.messageType() == Messages.Message.GameParams) {
+        console.log("Initial game params");
+      } else if (message.messageType() == Messages.Message.WorldState) {
+        const world = message.message(new Messages.WorldState())!;
         const tank = world.player();
         if (tank != null) {
           const pos = tank.pos()!;
           console.log("Player coordinates: ", pos.x, pos.y);
+        } else {
+          console.log("Player = null");
         }
-        console.log("Player = null");
       }
     }
+    // Drawing stuff, for later.
     // const brush: CanvasRenderingContext2D = canvas.canvas.getContext("2d")!;
     // brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
     // canvas.draw_axis();
