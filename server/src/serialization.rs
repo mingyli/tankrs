@@ -127,8 +127,8 @@ mod tests {
 
         let recovered_tank = get_root::<world_generated::Tank>(builder.finished_data());
 
-        assert_eq!(recovered_tank.pos().context("fuck")?.x(), tank.pos().x);
-        assert_eq!(recovered_tank.pos().context("fuck")?.y(), tank.pos().y);
+        assert_eq!(recovered_tank.pos().context("f")?.x(), tank.pos().x);
+        assert_eq!(recovered_tank.pos().context("f")?.y(), tank.pos().y);
         Ok(())
     }
 
@@ -150,20 +150,20 @@ mod tests {
             message.message_type(),
             messages_generated::Message::WorldState
         );
-        let recovered_world = message.message_as_world_state().context("fuck")?;
+        let recovered_world = message.message_as_world_state().context("f")?;
 
-        let player = recovered_world.player().context("fuck")?;
-        let others = recovered_world.others().context("fuck")?;
+        let player = recovered_world.player().context("f")?;
+        let others = recovered_world.others().context("f")?;
         let tanks = world.tanks();
 
-        assert_eq!(player.pos().context("fuck")?.x(), tanks[0].pos().x);
-        assert_eq!(player.pos().context("fuck")?.y(), tanks[0].pos().y);
+        assert_eq!(player.pos().context("f")?.x(), tanks[0].pos().x);
+        assert_eq!(player.pos().context("f")?.y(), tanks[0].pos().y);
 
         assert_eq!(others.len(), 2);
-        assert_eq!(others.get(0).pos().context("fuck")?.x(), tanks[1].pos().x);
-        assert_eq!(others.get(0).pos().context("fuck")?.y(), tanks[1].pos().y);
-        assert_eq!(others.get(1).pos().context("fuck")?.x(), tanks[2].pos().x);
-        assert_eq!(others.get(1).pos().context("fuck")?.y(), tanks[2].pos().y);
+        assert_eq!(others.get(0).pos().context("f")?.x(), tanks[1].pos().x);
+        assert_eq!(others.get(0).pos().context("f")?.y(), tanks[1].pos().y);
+        assert_eq!(others.get(1).pos().context("f")?.x(), tanks[2].pos().x);
+        assert_eq!(others.get(1).pos().context("f")?.y(), tanks[2].pos().y);
         Ok(())
     }
 }
