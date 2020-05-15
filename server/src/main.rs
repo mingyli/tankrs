@@ -130,17 +130,17 @@ async fn run() -> anyhow::Result<()> {
     });
 
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
-    let world = world_generated::WorldState::create(
+    let world = world_generated::fuck::WorldState::create(
         &mut builder,
-        &world_generated::WorldStateArgs {
+        &world_generated::fuck::WorldStateArgs {
             player: None,
             others: None,
         },
     );
-    let message = messages_generated::MessageRoot::create(
+    let message = messages_generated::tankrs::MessageRoot::create(
         &mut builder,
-        &messages_generated::MessageRootArgs {
-            message_type: messages_generated::Message::WorldState,
+        &messages_generated::tankrs::MessageRootArgs {
+            message_type: messages_generated::tankrs::Message::Fuck_WorldState,
             message: Some(world.as_union_value()),
         },
     );

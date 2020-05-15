@@ -1,6 +1,6 @@
 include "math.fbs";
 
-namespace Tankrs;
+namespace Fuck;
 
 // The message contains all the relevant user-facing information about tanks.
 table Tank {
