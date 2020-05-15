@@ -9,11 +9,6 @@
     "build": "browserify src/app.ts -p [ tsify --noImplicitAny ] > app/app.js"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.6",
-    "@babel/plugin-proposal-class-properties": "^7.8.3",
-    "@babel/plugin-proposal-object-rest-spread": "^7.9.6",
-    "@babel/preset-typescript": "^7.9.0",
     "@types/flatbuffers": "^1.10.0",
     "flatbuffers": "^1.12.0",
     "typescript": "^3.8.3"
