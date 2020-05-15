@@ -13,15 +13,6 @@ pub trait SerializableAsMessage {
     fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Buffer>;
 }
 
-trait Flatbufferable<'buffer> {
-    type Object;
-    fn add_to_fb(
-        &self,
-        builder: &mut FlatBufferBuilder<'buffer>,
-        config: &Config,
-    ) -> WIPOffset<Self::Object>;
-}
-
 pub struct Config {
     pub player_id: u16,
 }
@@ -31,15 +22,23 @@ impl Config {
         Config { player_id }
     }
 }
+trait Flatbufferable<'buf> {
+    type Object;
+    fn add_to_fb(
+        &self,
+        builder: &mut FlatBufferBuilder<'buf>,
+        config: &Config,
+    ) -> WIPOffset<Self::Object>;
+}
 
-impl<'buffer> Flatbufferable<'buffer> for Tank {
-    type Object = world_generated::Tank<'buffer>;
+impl<'buf> Flatbufferable<'buf> for Tank {
+    type Object = world_generated::Tank<'buf>;
     #[allow(unused_variables)]
     fn add_to_fb(
         &self,
-        builder: &mut FlatBufferBuilder<'buffer>,
+        builder: &mut FlatBufferBuilder<'buf>,
         config: &Config,
-    ) -> WIPOffset<world_generated::Tank<'buffer>> {
+    ) -> WIPOffset<world_generated::Tank<'buf>> {
         world_generated::Tank::create(
             builder,
             &world_generated::TankArgs {
@@ -53,13 +52,13 @@ impl<'buffer> Flatbufferable<'buffer> for Tank {
 // get_root for an array. Perhaps make a testing schema that just has the [Tank] field.
 // 2) See if we can simplify for all Vec<&T> where T is Flatbufferable. Currently difficult because
 //    each T has its own associated Buffer type.
-impl<'buffer> Flatbufferable<'buffer> for Vec<&Tank> {
-    type Object = Vector<'buffer, ForwardsUOffset<world_generated::Tank<'buffer>>>;
+impl<'buf> Flatbufferable<'buf> for Vec<&Tank> {
+    type Object = Vector<'buf, ForwardsUOffset<world_generated::Tank<'buf>>>;
     fn add_to_fb(
         &self,
-        builder: &mut FlatBufferBuilder<'buffer>,
+        builder: &mut FlatBufferBuilder<'buf>,
         config: &Config,
-    ) -> WIPOffset<Vector<'buffer, ForwardsUOffset<world_generated::Tank<'buffer>>>> {
+    ) -> WIPOffset<Vector<'buf, ForwardsUOffset<world_generated::Tank<'buf>>>> {
         let mut vec = Vec::new();
 
         for tank in self.iter() {
