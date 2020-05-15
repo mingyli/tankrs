@@ -41,15 +41,13 @@ class Canvas {
   }
 
   // Draw a 1 by 1 box at certain coordinates.
-  draw_box(pt: Point) {
-    const brush: CanvasRenderingContext2D = this.canvas.getContext("2d")!;
+  draw_box(brush: CanvasRenderingContext2D, pt: Point) {
     pt = this.to_display_coordinates(pt);
     brush.fillRect(pt.x, pt.y, this.x_scale, this.y_scale);
   }
 
   // Draw a 1 unit grid.
-  draw_axis() {
-    const brush: CanvasRenderingContext2D = this.canvas.getContext("2d")!;
+  draw_axis(brush: CanvasRenderingContext2D) {
     brush.lineWidth = 0.5;
     brush.strokeStyle = "#8d8d91";
 
@@ -78,7 +76,8 @@ class Canvas {
 // Init function.
 function init() {
   const canvas: Canvas = new Canvas();
-  canvas.draw_axis();
+  const brush = canvas.canvas.getContext("2d")!;
+  canvas.draw_axis(brush);
   // Create WebSocket connection.
   const socket = new WebSocket("ws://localhost:9001");
 
@@ -91,9 +90,11 @@ function init() {
   socket.addEventListener("message", async function (event) {
     const data = event.data;
     console.log("Received: ", data);
-    if (typeof data == "object") {
-      console.log("Received object, trying to parse into flatbuffer");
 
+    // Create brush.
+    brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
+    canvas.draw_axis(brush);
+    if (typeof data == "object") {
       const arrBuf = await data.arrayBuffer();
       const buf = new flatbuffers.ByteBuffer(new Uint8Array(arrBuf));
       const message = Messages.MessageRoot.getRootAsMessageRoot(buf);
@@ -101,20 +102,20 @@ function init() {
         console.log("Initial game params");
       } else if (message.messageType() == Messages.Message.WorldState) {
         const world = message.message(new Messages.WorldState())!;
-        const tank = world.player();
-        if (tank != null) {
-          const pos = tank.pos()!;
-          console.log("Player coordinates: ", pos.x, pos.y);
-        } else {
-          console.log("Player = null");
+
+        const playerPos = world.player()!.pos()!;
+        brush.fillStyle = "#FF0000";
+        canvas.draw_box(brush, new Point(playerPos.x(), playerPos.y()));
+        console.log("Player at: ", playerPos.x(), playerPos.y());
+
+        for (let i = 0; i < world.othersLength(); ++i) {
+          const pos = world.others(i, new Messages.Tank())!.pos()!;
+          brush.fillStyle = "#000000";
+          canvas.draw_box(brush, new Point(pos.x(), pos.y()));
+          console.log("Others at", pos.x(), pos.y());
         }
       }
     }
-    // Drawing stuff, for later.
-    // const brush: CanvasRenderingContext2D = canvas.canvas.getContext("2d")!;
-    // brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
-    // canvas.draw_axis();
-    // canvas.draw_box(new Point(x_coord, 0));
   });
 }
 

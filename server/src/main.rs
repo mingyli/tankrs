@@ -138,9 +138,9 @@ async fn run() -> anyhow::Result<()> {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let mut world = World::new();
 
-    world.add_tank(Tank::new(0, Position { x: 69.0, y: 420.0 }));
-    world.add_tank(Tank::new(1, Position { x: 23.0, y: 54.0 }));
-    world.add_tank(Tank::new(2, Position { x: 84.0, y: 34.0 }));
+    world.add_tank(Tank::new(0, Position { x: 5.0, y: 5.0 }));
+    world.add_tank(Tank::new(1, Position { x: 2.0, y: 8.0 }));
+    world.add_tank(Tank::new(2, Position { x: 7.0, y: 3.0 }));
 
     let world = Arc::new(world.serialize(&mut builder, &Config::new(0)).unwrap());
 
