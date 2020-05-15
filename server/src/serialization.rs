@@ -83,7 +83,10 @@ impl SerializableAsMessage for World {
             ));
         }
 
-        let player = player.get(0).unwrap().add_to_fb(builder, config);
+        let player = player
+            .first()
+            .ok_or(anyhow!("Player doesn't exist."))?
+            .add_to_fb(builder, config);
         let other_tanks = other_tanks.add_to_fb(builder, config);
 
         let world = world_generated::WorldState::create(
