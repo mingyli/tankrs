@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 fn main() {
     let path_bufs: Vec<PathBuf> = glob("../*.fbs")
         .expect("failed to glob flatbuffer defs")
-        .map(|x| x.unwrap())
+        .map(std::result::Result::unwrap)
         .collect();
-    let paths: Vec<&Path> = path_bufs.iter().map(|x| x.as_path()).collect();
+    let paths: Vec<&Path> = path_bufs.iter().map(std::path::PathBuf::as_path).collect();
 
     println!("cargo:rerun-if-changed=schema");
     flatc_rust::run(flatc_rust::Args {
