@@ -6,7 +6,7 @@
     "format": "prettier write .",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "npm run typecheck -- --watch",
-    "build": "browserify src/app.ts -p [ tsify --noImplicitAny ] > app.js"
+    "build": "browserify src/app.ts -p [ tsify --noImplicitAny ] > app/app.js"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",

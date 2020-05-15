@@ -149,16 +149,22 @@ jobs:
 
   build-ts:
     name: Build Typescript
+    needs: flatbuffers
     runs-on: ubuntu-latest
     env:
       working-directory: ./client
 
     steps:
       - uses: actions/checkout@v2
-      - run: yarn install
-      - run: yarn run typecheck
-        working-directory: ${{env.working-directory}}
-      - run: yarn run build
+      - name: Download flatc binary
+        uses: actions/download-artifact@v1
+        with:
+          name: flatbuffers
+      - name: chmod
+        run: chmod +x flatbuffers/flatc
+      - name: add to path
+        run: echo "::add-path::$(realpath flatbuffers)"
+      - run: make all
         working-directory: ${{env.working-directory}}
 
   format-check:
