@@ -141,7 +141,7 @@ async fn run() -> anyhow::Result<()> {
     world.add_tank(Tank::new(1, Position { x: 23.0, y: 54.0 }));
     world.add_tank(Tank::new(2, Position { x: 84.0, y: 34.0 }));
 
-    let world = Arc::new(world.serialize(&mut builder, &Config::new(0)).unwrap());
+    let world = Arc::new(world.serialize(&mut builder, &Config::new(0))?);
 
     // Listen for new WebSocket connections.
     while let Ok((stream, address)) = tcp_listener.accept().await {

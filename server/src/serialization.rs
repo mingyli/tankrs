@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use flatbuffers::{FlatBufferBuilder, ForwardsUOffset, Vector, WIPOffset};
 
 use schema::math_generated;
@@ -87,7 +87,7 @@ impl SerializableAsMessage for World {
 
         let player = player
             .first()
-            .ok_or_else(|| anyhow!("Player doesn't exist."))?
+            .context("Player doesn't exist.")?
             .add_to_fb(builder, config);
         let other_tanks = other_tanks.add_to_fb(builder, config);
 
@@ -128,8 +128,8 @@ mod tests {
 
         let recovered_tank = get_root::<world_generated::Tank>(builder.finished_data());
 
-        assert_eq!(recovered_tank.pos().unwrap().x(), tank.pos().x);
-        assert_eq!(recovered_tank.pos().unwrap().y(), tank.pos().y);
+        assert_eq!(recovered_tank.pos().context("fuck")?.x(), tank.pos().x);
+        assert_eq!(recovered_tank.pos().context("fuck")?.y(), tank.pos().y);
         Ok(())
     }
 
@@ -151,20 +151,20 @@ mod tests {
             message.message_type(),
             messages_generated::Message::WorldState
         );
-        let recovered_world = message.message_as_world_state().unwrap();
+        let recovered_world = message.message_as_world_state().context("fuck")?;
 
-        let player = recovered_world.player().unwrap();
-        let others = recovered_world.others().unwrap();
+        let player = recovered_world.player().context("fuck")?;
+        let others = recovered_world.others().context("fuck")?;
         let tanks = world.tanks();
 
-        assert_eq!(player.pos().unwrap().x(), tanks[0].pos().x);
-        assert_eq!(player.pos().unwrap().y(), tanks[0].pos().y);
+        assert_eq!(player.pos().context("fuck")?.x(), tanks[0].pos().x);
+        assert_eq!(player.pos().context("fuck")?.y(), tanks[0].pos().y);
 
         assert_eq!(others.len(), 2);
-        assert_eq!(others.get(0).pos().unwrap().x(), tanks[1].pos().x);
-        assert_eq!(others.get(0).pos().unwrap().y(), tanks[1].pos().y);
-        assert_eq!(others.get(1).pos().unwrap().x(), tanks[2].pos().x);
-        assert_eq!(others.get(1).pos().unwrap().y(), tanks[2].pos().y);
+        assert_eq!(others.get(0).pos().context("fuck")?.x(), tanks[1].pos().x);
+        assert_eq!(others.get(0).pos().context("fuck")?.y(), tanks[1].pos().y);
+        assert_eq!(others.get(1).pos().context("fuck")?.x(), tanks[2].pos().x);
+        assert_eq!(others.get(1).pos().context("fuck")?.y(), tanks[2].pos().y);
         Ok(())
     }
 }
