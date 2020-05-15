@@ -10,7 +10,13 @@ use log::{debug, info, warn};
 use tungstenite::Message;
 
 use schema::actions_generated::get_root_as_action_root;
-use schema::{messages_generated, world_generated};
+
+mod math;
+mod serialization;
+mod world;
+use math::Position;
+use serialization::{Config, SerializableAsMessage};
+use world::{Tank, World};
 
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
 type Buffer = Vec<u8>;
@@ -130,22 +136,13 @@ async fn run() -> anyhow::Result<()> {
     });
 
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
-    let world = world_generated::WorldState::create(
-        &mut builder,
-        &world_generated::WorldStateArgs {
-            player: None,
-            others: None,
-        },
-    );
-    let message = messages_generated::MessageRoot::create(
-        &mut builder,
-        &messages_generated::MessageRootArgs {
-            message_type: messages_generated::Message::WorldState,
-            message: Some(world.as_union_value()),
-        },
-    );
-    builder.finish(message, None);
-    let world = Arc::new(builder.finished_data().to_vec());
+    let mut world = World::new();
+
+    world.add_tank(Tank::new(0, Position { x: 69.0, y: 420.0 }));
+    world.add_tank(Tank::new(1, Position { x: 23.0, y: 54.0 }));
+    world.add_tank(Tank::new(2, Position { x: 84.0, y: 34.0 }));
+
+    let world = Arc::new(world.serialize(&mut builder, &Config::new(0)).unwrap());
 
     // Listen for new WebSocket connections.
     while let Ok((stream, address)) = tcp_listener.accept().await {

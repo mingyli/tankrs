@@ -17,4 +17,3 @@ table WorldState {
   player: Tank;
   others: [Tank];
 }
-
