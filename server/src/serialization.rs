@@ -118,7 +118,7 @@ mod tests {
     use flatbuffers::get_root;
 
     #[test]
-    fn tank_can_be_flatbuffered() -> anyhow::Result<()> {
+    fn tank_can_be_flatbuffered() -> Result<()> {
         let config = Config::new(0);
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
         let tank = Tank::new(0, Position { x: 69.0, y: 420.0 });
@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[test]
-    fn world_can_be_serialized() -> anyhow::Result<()> {
+    fn world_can_be_serialized() -> Result<()> {
         let config = Config::new(0);
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
 

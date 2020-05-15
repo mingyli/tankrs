@@ -2,6 +2,7 @@ use std::collections::{HashSet, VecDeque};
 use std::net::SocketAddr;
 use std::time;
 
+use anyhow::Result;
 use async_std::net::{TcpListener, TcpStream};
 use async_std::sync::{Arc, Mutex};
 use async_std::task;
@@ -28,7 +29,7 @@ async fn handle_client(
     actions: ActionQueue,
     peers: Peers,
     world_state: WorldState,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     info!("Handling client.");
 
     let ws_stream = async_tungstenite::accept_async(stream).await?;
@@ -52,7 +53,7 @@ async fn handle_client(
 }
 
 // Publish world state at a regular interval.
-async fn publish<T>(outgoing: &mut T, world_state: WorldState, peers: Peers) -> anyhow::Result<()>
+async fn publish<T>(outgoing: &mut T, world_state: WorldState, peers: Peers) -> Result<()>
 where
     T: futures::Sink<Message> + std::marker::Unpin,
     T::Error: std::error::Error + Send + Sync + 'static,
@@ -70,7 +71,7 @@ where
 }
 
 // Listen for and enqueue actions from client.
-async fn listen<T>(incoming: &mut T, actions: ActionQueue) -> anyhow::Result<()>
+async fn listen<T>(incoming: &mut T, actions: ActionQueue) -> Result<()>
 where
     T: stream::Stream<Item = Result<Message, tungstenite::Error>> + std::marker::Unpin,
 {
@@ -95,7 +96,7 @@ where
     Ok(())
 }
 
-async fn run() -> anyhow::Result<()> {
+async fn run() -> Result<()> {
     env_logger::builder()
         .format(|buffer, record| {
             use std::io::Write;
@@ -157,7 +158,7 @@ async fn run() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     task::block_on(run())
 }
 
@@ -165,7 +166,7 @@ fn main() -> anyhow::Result<()> {
 mod tests {
     use super::*;
     #[async_std::test]
-    async fn test_listen() -> anyhow::Result<()> {
+    async fn test_listen() -> Result<()> {
         let mut stream = stream::iter(vec![
             Ok(Message::Text("hi".to_string())),
             Ok(Message::Close(None)),
@@ -178,7 +179,7 @@ mod tests {
     }
 
     #[async_std::test]
-    async fn test_publish() -> anyhow::Result<()> {
+    async fn test_publish() -> Result<()> {
         let mut sink = VecDeque::new();
         let world = WorldState::new(vec![0u8, 1]);
         let peers = [SocketAddr::new(
