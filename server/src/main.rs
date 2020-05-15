@@ -15,11 +15,10 @@ mod math;
 mod serialization;
 mod world;
 use math::Position;
-use serialization::{Config, SerializableAsMessage};
+use serialization::{Buffer, Config, SerializableAsMessage};
 use world::{Tank, World};
 
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
-type Buffer = Vec<u8>;
 type WorldState = Arc<Buffer>;
 type ActionQueue = Arc<Mutex<VecDeque<Buffer>>>;
 

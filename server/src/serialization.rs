@@ -7,17 +7,19 @@ use schema::world_generated;
 
 use crate::world::{Tank, World};
 
+pub type Buffer = Vec<u8>;
+
 pub trait SerializableAsMessage {
-    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Vec<u8>>;
+    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Buffer>;
 }
 
-trait Flatbufferable<'a> {
-    type Buffer;
+trait Flatbufferable<'buffer> {
+    type Object;
     fn add_to_fb(
         &self,
-        builder: &mut FlatBufferBuilder<'a>,
+        builder: &mut FlatBufferBuilder<'buffer>,
         config: &Config,
-    ) -> WIPOffset<Self::Buffer>;
+    ) -> WIPOffset<Self::Object>;
 }
 
 pub struct Config {
@@ -30,14 +32,14 @@ impl Config {
     }
 }
 
-impl<'a> Flatbufferable<'a> for Tank {
-    type Buffer = world_generated::Tank<'a>;
+impl<'buffer> Flatbufferable<'buffer> for Tank {
+    type Object = world_generated::Tank<'buffer>;
     #[allow(unused_variables)]
     fn add_to_fb(
         &self,
-        builder: &mut FlatBufferBuilder<'a>,
+        builder: &mut FlatBufferBuilder<'buffer>,
         config: &Config,
-    ) -> WIPOffset<world_generated::Tank<'a>> {
+    ) -> WIPOffset<world_generated::Tank<'buffer>> {
         world_generated::Tank::create(
             builder,
             &world_generated::TankArgs {
@@ -51,13 +53,13 @@ impl<'a> Flatbufferable<'a> for Tank {
 // get_root for an array. Perhaps make a testing schema that just has the [Tank] field.
 // 2) See if we can simplify for all Vec<&T> where T is Flatbufferable. Currently difficult because
 //    each T has its own associated Buffer type.
-impl<'a> Flatbufferable<'a> for Vec<&Tank> {
-    type Buffer = Vector<'a, ForwardsUOffset<world_generated::Tank<'a>>>;
+impl<'buffer> Flatbufferable<'buffer> for Vec<&Tank> {
+    type Object = Vector<'buffer, ForwardsUOffset<world_generated::Tank<'buffer>>>;
     fn add_to_fb(
         &self,
-        builder: &mut FlatBufferBuilder<'a>,
+        builder: &mut FlatBufferBuilder<'buffer>,
         config: &Config,
-    ) -> WIPOffset<Vector<'a, ForwardsUOffset<world_generated::Tank<'a>>>> {
+    ) -> WIPOffset<Vector<'buffer, ForwardsUOffset<world_generated::Tank<'buffer>>>> {
         let mut vec = Vec::new();
 
         for tank in self.iter() {
@@ -69,7 +71,7 @@ impl<'a> Flatbufferable<'a> for Vec<&Tank> {
 }
 
 impl SerializableAsMessage for World {
-    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Vec<u8>> {
+    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Buffer> {
         builder.reset();
 
         let (player, other_tanks): (Vec<&Tank>, Vec<&Tank>) = self
@@ -117,7 +119,7 @@ mod tests {
     use flatbuffers::get_root;
 
     #[test]
-    fn tank_can_be_flatbuffered() {
+    fn tank_can_be_flatbuffered() -> anyhow::Result<()> {
         let config = Config::new(0);
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
         let tank = Tank::new(0, Position { x: 69.0, y: 420.0 });
@@ -128,10 +130,11 @@ mod tests {
 
         assert_eq!(recovered_tank.pos().unwrap().x(), tank.pos().x);
         assert_eq!(recovered_tank.pos().unwrap().y(), tank.pos().y);
+        Ok(())
     }
 
     #[test]
-    fn world_can_be_serialized() {
+    fn world_can_be_serialized() -> anyhow::Result<()> {
         let config = Config::new(0);
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
 
@@ -141,7 +144,7 @@ mod tests {
         world.add_tank(Tank::new(1, Position { x: 23.0, y: 54.0 }));
         world.add_tank(Tank::new(2, Position { x: 84.0, y: 34.0 }));
 
-        let world_as_bytes = world.serialize(&mut builder, &config).unwrap();
+        let world_as_bytes = world.serialize(&mut builder, &config)?;
 
         let message = get_root::<messages_generated::MessageRoot>(world_as_bytes.as_ref());
         assert_eq!(
@@ -162,5 +165,6 @@ mod tests {
         assert_eq!(others.get(0).pos().unwrap().y(), tanks[1].pos().y);
         assert_eq!(others.get(1).pos().unwrap().x(), tanks[2].pos().x);
         assert_eq!(others.get(1).pos().unwrap().y(), tanks[2].pos().y);
+        Ok(())
     }
 }
