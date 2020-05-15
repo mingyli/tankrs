@@ -1,3 +1,8 @@
+import {flatbuffers} from 'flatbuffers'
+import * as World from './flatschema/world_generated'
+import * as Math from './flatschema/math_generated'
+import * as Message from './flatschema/messages_generated'
+
 // Point.
 class Point {
   x: number;
@@ -85,12 +90,33 @@ function init() {
   });
 
   // Listen for messages
-  socket.addEventListener("message", function (event) {
-    console.log("Received: ", event.data);
-    const x_coord: number = parseFloat(event.data);
-    const brush: CanvasRenderingContext2D = canvas.canvas.getContext("2d")!;
-    brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
-    canvas.draw_axis();
-    canvas.draw_box(new Point(x_coord, 0));
+  socket.addEventListener("message", async function (event) {
+    const data = event.data;
+    console.log("Received: ", data);
+    if (typeof(data) == "object") {
+      console.log("Received object, trying to parse into flatbuffer");
+      const arrBuf:ArrayBuffer = await data.arrayBuffer();
+      const buf = new flatbuffers.ByteBuffer(new Uint8Array(arrBuf));
+      const message = Message.Tankrs.MessageRoot.getRootAsMessageRoot(buf)
+      if (message.messageType() == Message.Tankrs.Message.GameParams) {
+
+      } else if (message.messageType() == Message.Tankrs.Message.WorldState) {
+        const world = message.message(new World.Tankrs.WorldState())!
+        const tank = world.player()
+        if (tank != null) {
+          const pos = tank.pos()!
+          console.log("Player coordinates: ", pos.x, pos.y)
+        }
+        console.log("Player = null")
+      }
+    }
+    // const brush: CanvasRenderingContext2D = canvas.canvas.getContext("2d")!;
+    // brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
+    // canvas.draw_axis();
+    // canvas.draw_box(new Point(x_coord, 0));
   });
 }
+
+window.onload = (_event:Event) => {
+  init()
+};
