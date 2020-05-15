@@ -164,6 +164,7 @@ jobs:
         run: chmod +x flatbuffers/flatc
       - name: add to path
         run: echo "::add-path::$(realpath flatbuffers)"
+      - run: yarn install
       - run: make all
         working-directory: ${{env.working-directory}}
 
