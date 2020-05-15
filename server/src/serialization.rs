@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use flatbuffers::{FlatBufferBuilder, ForwardsUOffset, Vector, WIPOffset};
-use log::error;
 
 use schema::math_generated;
 use schema::messages_generated;
@@ -79,11 +78,6 @@ impl SerializableAsMessage for World {
             .partition(|tank| tank.player() == config.player_id);
 
         if player.len() != 1 {
-            error!(
-                "There are {} players with id {}. Can't serialize world.",
-                player.len(),
-                config.player_id
-            );
             return Err(anyhow!(
                 "Config does not specify unique player; can't serialize for schema."
             ));
