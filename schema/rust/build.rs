@@ -4,9 +4,7 @@ use anyhow::Result;
 use glob::glob;
 
 fn main() -> Result<()> {
-    let path_bufs = glob("../*.fbs")
-        .expect("failed to glob flatbuffer defs")
-        .collect::<Result<Vec<PathBuf>, _>>()?;
+    let path_bufs = glob("../*.fbs")?.collect::<Result<Vec<PathBuf>, _>>()?;
 
     let paths: Vec<&Path> = path_bufs.iter().map(std::path::PathBuf::as_path).collect();
 
