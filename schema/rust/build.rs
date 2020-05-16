@@ -7,6 +7,7 @@ fn main() {
             Path::new("../messages.fbs"),
             Path::new("../actions.fbs"),
             Path::new("../math.fbs"),
+            Path::new("../world.fbs"),
         ],
         out_dir: Path::new("src"),
         ..flatc_rust::Args::default()
