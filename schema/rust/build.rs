@@ -1,11 +1,13 @@
-use glob::glob;
 use std::path::{Path, PathBuf};
 
-fn main() {
-    let path_bufs: Vec<PathBuf> = glob("../*.fbs")
+use anyhow::Result;
+use glob::glob;
+
+fn main() -> Result<()> {
+    let path_bufs = glob("../*.fbs")
         .expect("failed to glob flatbuffer defs")
-        .map(std::result::Result::unwrap)
-        .collect();
+        .collect::<Result<Vec<PathBuf>, _>>()?;
+
     let paths: Vec<&Path> = path_bufs.iter().map(std::path::PathBuf::as_path).collect();
 
     println!("cargo:rerun-if-changed=schema");
@@ -15,4 +17,6 @@ fn main() {
         ..flatc_rust::Args::default()
     })
     .expect("flatc failed to compile the flatbuffers.");
+
+    Ok(())
 }

@@ -10,5 +10,6 @@ edition = "2018"
 flatbuffers = "0.6.1"
 
 [build-dependencies]
+anyhow = "1.0.31"
 flatc-rust = "0.1.2"
 glob = "0.3.0"
