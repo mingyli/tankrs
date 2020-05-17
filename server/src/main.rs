@@ -15,7 +15,7 @@ use schema::actions_generated::get_root_as_action_root;
 mod math;
 mod serialization;
 mod world;
-use math::Position;
+use math::Vec2;
 use serialization::{Buffer, Config, SerializableAsMessage};
 use world::{Tank, World};
 
@@ -138,9 +138,9 @@ async fn run() -> Result<()> {
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let mut world = World::new();
 
-    world.add_tank(Tank::new(0, Position { x: 5.0, y: 5.0 }));
-    world.add_tank(Tank::new(1, Position { x: 2.0, y: 8.0 }));
-    world.add_tank(Tank::new(2, Position { x: 7.0, y: 3.0 }));
+    world.register_player(0);
+    world.register_player(1);
+    world.register_player(2);
 
     let world = Arc::new(world.serialize(&mut builder, &Config::new(0))?);
 

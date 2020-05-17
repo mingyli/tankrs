@@ -14,15 +14,19 @@ path = "server/src/main.rs"
 name = "client"
 
 [dependencies]
-schema = { path = "schema/rust" }
-flatbuffers = "0.6.1"
-tungstenite = "0.10.1"
-futures = "0.3.5"
-async-tungstenite = { version = "0.4.2", features = ["async-std-runtime"] }
-async-std = { version = "1.5.0", features = ["attributes"] }
 anyhow = "1.0.28"
-log = "0.4"
+auto_ops = "0.1.0"
+async-std = { version = "1.5.0", features = ["attributes"] }
+async-tungstenite = { version = "0.4.2", features = ["async-std-runtime"] }
 env_logger = "0.7.1"
+flatbuffers = "0.6.1"
+futures = "0.3.5"
+log = "0.4"
+rand = "0.7.3"
+tungstenite = "0.10.1"
+uuid = "0.8.0"
+
+schema = { path = "schema/rust" }
 
 [dev-dependencies]
 url = "2.1.1"
