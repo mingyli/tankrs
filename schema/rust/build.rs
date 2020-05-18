@@ -1,15 +1,19 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-fn main() {
+use anyhow::Result;
+use glob::glob;
+
+fn main() -> Result<()> {
+    let path_bufs = glob("../*.fbs")?.collect::<Result<Vec<PathBuf>, _>>()?;
+
+    let paths: Vec<&Path> = path_bufs.iter().map(std::path::PathBuf::as_path).collect();
+
     println!("cargo:rerun-if-changed=schema");
     flatc_rust::run(flatc_rust::Args {
-        inputs: &[
-            Path::new("../messages.fbs"),
-            Path::new("../actions.fbs"),
-            Path::new("../math.fbs"),
-        ],
+        inputs: paths.as_slice(),
         out_dir: Path::new("src"),
         ..flatc_rust::Args::default()
-    })
-    .expect("flatc failed to compile the flatbuffers.");
+    })?;
+
+    Ok(())
 }
