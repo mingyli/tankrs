@@ -13,8 +13,7 @@ fn main() -> Result<()> {
         inputs: paths.as_slice(),
         out_dir: Path::new("src"),
         ..flatc_rust::Args::default()
-    })
-    .expect("flatc failed to compile the flatbuffers.");
+    })?;
 
     Ok(())
 }
