@@ -7,7 +7,6 @@ use futures::{stream, StreamExt};
 use log::{debug, info, warn};
 
 use crate::ActionQueue;
-// use schema::{heartbeat, math, tank, world};
 
 // Listen for and enqueue actions from client.
 pub async fn listen<T>(incoming: &mut T, actions: ActionQueue) -> Result<()>
@@ -35,7 +34,7 @@ where
     Ok(())
 }
 
-// TODO: Consume actions in non-blocking fashion instead of displaying actions periodically.
+// TODO(ming): Consume actions in non-blocking fashion instead of displaying actions periodically.
 pub async fn apply_actions(actions_arc: ActionQueue) -> Result<()> {
     loop {
         info!("Clearing action queue...");
