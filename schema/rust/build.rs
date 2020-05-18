@@ -14,7 +14,7 @@ fn main() -> Result<()> {
         .include("../")
         .customize(protobuf_codegen_pure::Customize {
             serde_derive: Some(true),
-            ..Default::default()
+            ..protobuf_codegen_pure::Customize::default()
         })
         .run()?;
 
