@@ -9,6 +9,27 @@ tankrs uses `yarn` to manage dependencies. To get started:
 1. Install yarn: `brew install yarn`
 2. Install all dependencies: `yarn install`
 
+tankrs is mainly written in `rust`. You will need the following
+
+- `rustfmt` for code formatting.
+- `rust-clippy` for writing idiomatic rust.
+
+tankrs uses `flatbuffers` to serialize data to transfer over wire.
+
+You will need to clone the GitHub repo and build the `flatc` binary.
+[This commit](https://github.com/google/flatbuffers/commit/c3faa83463ca2556d6e7ab5b696cc311951f5857)
+is confirmed to work, but HEAD should work unless otherwise noted.
+
+## Client
+
+Run `make all` in client/ to generate flatbuffers and app.js .
+You can then open client/app/app.html.
+
+## Server
+
+Run `cargo run` in the root directory.
+This will take care of all build requirements as well.
+
 ## Formatting
 
 tankrs uses [`prettier`](https://prettier.io/) for formatting.
