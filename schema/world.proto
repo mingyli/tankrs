@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+import "tank.proto";
+
+message World {
+  repeated Tank tanks = 1;
+}

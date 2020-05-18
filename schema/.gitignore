@@ -1,2 +1,2 @@
-rust/src/*_generated.rs
+rust/src/*.rs
 rust/Cargo.lock

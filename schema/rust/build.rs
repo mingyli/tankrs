@@ -1,19 +1,22 @@
-use std::path::{Path, PathBuf};
-
 use anyhow::Result;
-use glob::glob;
 
 fn main() -> Result<()> {
-    let path_bufs = glob("../*.fbs")?.collect::<Result<Vec<PathBuf>, _>>()?;
-
-    let paths: Vec<&Path> = path_bufs.iter().map(std::path::PathBuf::as_path).collect();
-
-    println!("cargo:rerun-if-changed=schema");
-    flatc_rust::run(flatc_rust::Args {
-        inputs: paths.as_slice(),
-        out_dir: Path::new("src"),
-        ..flatc_rust::Args::default()
-    })?;
+    // TODO(mluogh): Implement globbing again. Sorry!
+    protobuf_codegen_pure::Codegen::new()
+        .out_dir("src/")
+        .inputs(&[
+            "../action.proto",
+            "../geometry.proto",
+            "../heartbeat.proto",
+            "../world.proto",
+            "../tank.proto",
+        ])
+        .include("../")
+        .customize(protobuf_codegen_pure::Customize {
+            serde_derive: Some(true),
+            ..Default::default()
+        })
+        .run()?;
 
     Ok(())
 }
