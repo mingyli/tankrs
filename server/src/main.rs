@@ -58,7 +58,7 @@ async fn run() -> Result<()> {
         tank.set_position(geometry::Vec2 {
             x: 4.5,
             y: 6.7,
-            ..Default::default()
+            ..geometry::Vec2::default()
         });
         tank
     });
