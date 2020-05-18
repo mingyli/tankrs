@@ -1,5 +1,6 @@
 import { flatbuffers } from "flatbuffers";
 import * as Messages from "./flatschema/messages_generated";
+import * as World from "./flatschema/world_generated";
 
 // Point.
 class Point {
@@ -113,7 +114,7 @@ function init() {
       console.log("Player at: ", playerPos.x(), playerPos.y());
 
       for (let i = 0; i < world.othersLength(); ++i) {
-        const pos = world.others(i, new Messages.Tank())!.pos()!;
+        const pos = world.others(i, new World.Tank())!.pos()!;
         brush.fillStyle = "#000000";
         canvas.draw_box(brush, new Point(pos.x(), pos.y()));
         console.log("Others at", pos.x(), pos.y());

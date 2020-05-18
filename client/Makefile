@@ -1,7 +1,7 @@
 default: all
 
 schema:
-	flatc  --ts --no-fb-import -o src/flatschema ../schema/*.fbs
+	flatc --ts --no-fb-import -o src/flatschema ../schema/*.fbs
 
 dev:
 	yarn run typecheck
