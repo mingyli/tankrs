@@ -6,17 +6,16 @@
     "format": "prettier write .",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "npm run typecheck -- --watch",
-    "build": "babel src --out-dir js --extensions \".ts,.tsx\" --source-maps inline"
+    "build": "browserify src/app.ts -p [ tsify --noImplicitAny ] > app/app.js"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.6",
-    "@babel/plugin-proposal-class-properties": "^7.8.3",
-    "@babel/plugin-proposal-object-rest-spread": "^7.9.6",
-    "@babel/preset-typescript": "^7.9.0",
+    "@types/flatbuffers": "^1.10.0",
+    "flatbuffers": "^1.12.0",
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "prettier": "^2.0.5"
+    "browserify": "^16.5.1",
+    "prettier": "^2.0.5",
+    "tsify": "^4.0.1"
   }
 }

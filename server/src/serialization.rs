@@ -1,23 +1,15 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use flatbuffers::{FlatBufferBuilder, ForwardsUOffset, Vector, WIPOffset};
 
 use schema::math_generated;
 use schema::messages_generated;
-use schema::world_generated;
 
 use crate::world::{Tank, World};
 
-pub trait SerializableAsMessage {
-    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Vec<u8>>;
-}
+pub type Buffer = Vec<u8>;
 
-trait Flatbufferable<'a> {
-    type Buffer;
-    fn add_to_fb(
-        &self,
-        builder: &mut FlatBufferBuilder<'a>,
-        config: &Config,
-    ) -> WIPOffset<Self::Buffer>;
+pub trait SerializableAsMessage {
+    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Buffer>;
 }
 
 pub struct Config {
@@ -29,18 +21,26 @@ impl Config {
         Config { player_id }
     }
 }
+trait Flatbufferable<'buf> {
+    type Object;
+    fn add_to_fb(
+        &self,
+        builder: &mut FlatBufferBuilder<'buf>,
+        config: &Config,
+    ) -> WIPOffset<Self::Object>;
+}
 
-impl<'a> Flatbufferable<'a> for Tank {
-    type Buffer = world_generated::Tank<'a>;
+impl<'buf> Flatbufferable<'buf> for Tank {
+    type Object = messages_generated::Tank<'buf>;
     #[allow(unused_variables)]
     fn add_to_fb(
         &self,
-        builder: &mut FlatBufferBuilder<'a>,
+        builder: &mut FlatBufferBuilder<'buf>,
         config: &Config,
-    ) -> WIPOffset<world_generated::Tank<'a>> {
-        world_generated::Tank::create(
+    ) -> WIPOffset<messages_generated::Tank<'buf>> {
+        messages_generated::Tank::create(
             builder,
-            &world_generated::TankArgs {
+            &messages_generated::TankArgs {
                 pos: Some(&math_generated::Vec2::new(self.pos().x, self.pos().y)),
             },
         )
@@ -51,13 +51,13 @@ impl<'a> Flatbufferable<'a> for Tank {
 // get_root for an array. Perhaps make a testing schema that just has the [Tank] field.
 // 2) See if we can simplify for all Vec<&T> where T is Flatbufferable. Currently difficult because
 //    each T has its own associated Buffer type.
-impl<'a> Flatbufferable<'a> for Vec<&Tank> {
-    type Buffer = Vector<'a, ForwardsUOffset<world_generated::Tank<'a>>>;
+impl<'buf> Flatbufferable<'buf> for Vec<&Tank> {
+    type Object = Vector<'buf, ForwardsUOffset<messages_generated::Tank<'buf>>>;
     fn add_to_fb(
         &self,
-        builder: &mut FlatBufferBuilder<'a>,
+        builder: &mut FlatBufferBuilder<'buf>,
         config: &Config,
-    ) -> WIPOffset<Vector<'a, ForwardsUOffset<world_generated::Tank<'a>>>> {
+    ) -> WIPOffset<Vector<'buf, ForwardsUOffset<messages_generated::Tank<'buf>>>> {
         let mut vec = Vec::new();
 
         for tank in self.iter() {
@@ -69,7 +69,7 @@ impl<'a> Flatbufferable<'a> for Vec<&Tank> {
 }
 
 impl SerializableAsMessage for World {
-    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Vec<u8>> {
+    fn serialize(&self, builder: &mut FlatBufferBuilder, config: &Config) -> Result<Buffer> {
         builder.reset();
 
         let (player, other_tanks): (Vec<&Tank>, Vec<&Tank>) = self
@@ -85,13 +85,13 @@ impl SerializableAsMessage for World {
 
         let player = player
             .first()
-            .ok_or_else(|| anyhow!("Player doesn't exist."))?
+            .context("Player doesn't exist.")?
             .add_to_fb(builder, config);
         let other_tanks = other_tanks.add_to_fb(builder, config);
 
-        let world = world_generated::WorldState::create(
+        let world = messages_generated::WorldState::create(
             builder,
-            &world_generated::WorldStateArgs {
+            &messages_generated::WorldStateArgs {
                 player: Some(player),
                 others: Some(other_tanks),
             },
@@ -117,21 +117,22 @@ mod tests {
     use flatbuffers::get_root;
 
     #[test]
-    fn tank_can_be_flatbuffered() {
+    fn tank_can_be_flatbuffered() -> Result<()> {
         let config = Config::new(0);
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
         let tank = Tank::new(0, Position { x: 69.0, y: 420.0 });
         let tank_buf = tank.add_to_fb(&mut builder, &config);
         builder.finish(tank_buf, None);
 
-        let recovered_tank = get_root::<world_generated::Tank>(builder.finished_data());
+        let recovered_tank = get_root::<messages_generated::Tank>(builder.finished_data());
 
-        assert_eq!(recovered_tank.pos().unwrap().x(), tank.pos().x);
-        assert_eq!(recovered_tank.pos().unwrap().y(), tank.pos().y);
+        assert_eq!(recovered_tank.pos().context("f")?.x(), tank.pos().x);
+        assert_eq!(recovered_tank.pos().context("f")?.y(), tank.pos().y);
+        Ok(())
     }
 
     #[test]
-    fn world_can_be_serialized() {
+    fn world_can_be_serialized() -> Result<()> {
         let config = Config::new(0);
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
 
@@ -141,26 +142,27 @@ mod tests {
         world.add_tank(Tank::new(1, Position { x: 23.0, y: 54.0 }));
         world.add_tank(Tank::new(2, Position { x: 84.0, y: 34.0 }));
 
-        let world_as_bytes = world.serialize(&mut builder, &config).unwrap();
+        let world_as_bytes = world.serialize(&mut builder, &config)?;
 
         let message = get_root::<messages_generated::MessageRoot>(world_as_bytes.as_ref());
         assert_eq!(
             message.message_type(),
             messages_generated::Message::WorldState
         );
-        let recovered_world = message.message_as_world_state().unwrap();
+        let recovered_world = message.message_as_world_state().context("f")?;
 
-        let player = recovered_world.player().unwrap();
-        let others = recovered_world.others().unwrap();
+        let player = recovered_world.player().context("f")?;
+        let others = recovered_world.others().context("f")?;
         let tanks = world.tanks();
 
-        assert_eq!(player.pos().unwrap().x(), tanks[0].pos().x);
-        assert_eq!(player.pos().unwrap().y(), tanks[0].pos().y);
+        assert_eq!(player.pos().context("f")?.x(), tanks[0].pos().x);
+        assert_eq!(player.pos().context("f")?.y(), tanks[0].pos().y);
 
         assert_eq!(others.len(), 2);
-        assert_eq!(others.get(0).pos().unwrap().x(), tanks[1].pos().x);
-        assert_eq!(others.get(0).pos().unwrap().y(), tanks[1].pos().y);
-        assert_eq!(others.get(1).pos().unwrap().x(), tanks[2].pos().x);
-        assert_eq!(others.get(1).pos().unwrap().y(), tanks[2].pos().y);
+        assert_eq!(others.get(0).pos().context("f")?.x(), tanks[1].pos().x);
+        assert_eq!(others.get(0).pos().context("f")?.y(), tanks[1].pos().y);
+        assert_eq!(others.get(1).pos().context("f")?.x(), tanks[2].pos().x);
+        assert_eq!(others.get(1).pos().context("f")?.y(), tanks[2].pos().y);
+        Ok(())
     }
 }
