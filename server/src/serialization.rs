@@ -3,6 +3,7 @@ use flatbuffers::{FlatBufferBuilder, ForwardsUOffset, Vector, WIPOffset};
 
 use schema::math_generated;
 use schema::messages_generated;
+use schema::world_generated;
 
 use crate::world::{Tank, World};
 
@@ -31,16 +32,16 @@ trait Flatbufferable<'buf> {
 }
 
 impl<'buf> Flatbufferable<'buf> for Tank {
-    type Object = messages_generated::Tank<'buf>;
+    type Object = world_generated::Tank<'buf>;
     #[allow(unused_variables)]
     fn add_to_fb(
         &self,
         builder: &mut FlatBufferBuilder<'buf>,
         config: &Config,
-    ) -> WIPOffset<messages_generated::Tank<'buf>> {
-        messages_generated::Tank::create(
+    ) -> WIPOffset<world_generated::Tank<'buf>> {
+        world_generated::Tank::create(
             builder,
-            &messages_generated::TankArgs {
+            &world_generated::TankArgs {
                 pos: Some(&math_generated::Vec2::new(self.pos().x, self.pos().y)),
             },
         )
@@ -52,12 +53,12 @@ impl<'buf> Flatbufferable<'buf> for Tank {
 // 2) See if we can simplify for all Vec<&T> where T is Flatbufferable. Currently difficult because
 //    each T has its own associated Buffer type.
 impl<'buf> Flatbufferable<'buf> for Vec<&Tank> {
-    type Object = Vector<'buf, ForwardsUOffset<messages_generated::Tank<'buf>>>;
+    type Object = Vector<'buf, ForwardsUOffset<world_generated::Tank<'buf>>>;
     fn add_to_fb(
         &self,
         builder: &mut FlatBufferBuilder<'buf>,
         config: &Config,
-    ) -> WIPOffset<Vector<'buf, ForwardsUOffset<messages_generated::Tank<'buf>>>> {
+    ) -> WIPOffset<Vector<'buf, ForwardsUOffset<world_generated::Tank<'buf>>>> {
         let mut vec = Vec::new();
 
         for tank in self.iter() {
@@ -89,9 +90,9 @@ impl SerializableAsMessage for World {
             .add_to_fb(builder, config);
         let other_tanks = other_tanks.add_to_fb(builder, config);
 
-        let world = messages_generated::WorldState::create(
+        let world = world_generated::WorldState::create(
             builder,
-            &messages_generated::WorldStateArgs {
+            &world_generated::WorldStateArgs {
                 player: Some(player),
                 others: Some(other_tanks),
             },
@@ -124,7 +125,7 @@ mod tests {
         let tank_buf = tank.add_to_fb(&mut builder, &config);
         builder.finish(tank_buf, None);
 
-        let recovered_tank = get_root::<messages_generated::Tank>(builder.finished_data());
+        let recovered_tank = get_root::<world_generated::Tank>(builder.finished_data());
 
         assert_eq!(recovered_tank.pos().context("f")?.x(), tank.pos().x);
         assert_eq!(recovered_tank.pos().context("f")?.y(), tank.pos().y);
