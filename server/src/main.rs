@@ -12,17 +12,12 @@ use schema::{geometry, tank, world};
 mod listener;
 mod publisher;
 
-type Buffer = Vec<u8>;
-type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
-type WorldState = Arc<world::World>;
-type ActionQueue = Arc<Mutex<VecDeque<Buffer>>>;
-
 async fn handle_client(
     stream: TcpStream,
     address: SocketAddr,
-    actions: ActionQueue,
-    peers: Peers,
-    world_state: WorldState,
+    actions: Arc<Mutex<VecDeque<Vec<u8>>>>,
+    peers: Arc<Mutex<HashSet<SocketAddr>>>,
+    world_state: Arc<world::World>,
 ) -> Result<()> {
     info!("Handling client.");
 
@@ -49,8 +44,8 @@ async fn handle_client(
 async fn run() -> Result<()> {
     let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
     info!("Starting server");
-    let peers = Peers::new(Mutex::new(HashSet::new()));
-    let actions = ActionQueue::new(Mutex::new(VecDeque::<Buffer>::new()));
+    let peers = Arc::new(Mutex::new(HashSet::new()));
+    let actions = Arc::new(Mutex::new(VecDeque::<Vec<u8>>::new()));
 
     let mut world = world::World::new();
     world.mut_tanks().push({

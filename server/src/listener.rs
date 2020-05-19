@@ -2,14 +2,13 @@ use std::collections::VecDeque;
 use std::time;
 
 use anyhow::Result;
+use async_std::sync::{Arc, Mutex};
 use async_std::task;
 use futures::{stream, StreamExt};
 use log::{debug, info, warn};
 
-use crate::ActionQueue;
-
 // Listen for and enqueue actions from client.
-pub async fn listen<T>(incoming: &mut T, actions: ActionQueue) -> Result<()>
+pub async fn listen<T>(incoming: &mut T, actions: Arc<Mutex<VecDeque<Vec<u8>>>>) -> Result<()>
 where
     T: stream::Stream<Item = Result<tungstenite::Message, tungstenite::Error>> + std::marker::Unpin,
 {
@@ -35,11 +34,11 @@ where
 }
 
 // TODO(ming): Consume actions in non-blocking fashion instead of displaying actions periodically.
-pub async fn apply_actions(actions_arc: ActionQueue) -> Result<()> {
+pub async fn apply_actions(actions: Arc<Mutex<VecDeque<Vec<u8>>>>) -> Result<()> {
     loop {
         info!("Clearing action queue...");
         let actions = {
-            let mut guard = actions_arc.lock().await;
+            let mut guard = actions.lock().await;
             std::mem::replace(&mut *guard, VecDeque::new())
         };
         info!("Contents of action queue:");
@@ -54,7 +53,6 @@ pub async fn apply_actions(actions_arc: ActionQueue) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Buffer;
     use async_std::sync::Mutex;
 
     #[async_std::test]
@@ -64,9 +62,9 @@ mod tests {
             Ok(tungstenite::Message::Close(None)),
             Ok(tungstenite::Message::Text("bye".to_string())),
         ]);
-        let actions = ActionQueue::new(Mutex::new(VecDeque::<Buffer>::new()));
+        let actions = Arc::new(Mutex::new(VecDeque::<Vec<u8>>::new()));
         listen(&mut stream, actions.clone()).await?;
-        assert_eq!(*actions.lock().await, VecDeque::<Buffer>::new());
+        assert_eq!(*actions.lock().await, VecDeque::<Vec<u8>>::new());
         Ok(())
     }
 }

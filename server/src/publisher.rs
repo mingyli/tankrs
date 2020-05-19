@@ -1,15 +1,21 @@
+use std::collections::HashSet;
+use std::net::SocketAddr;
 use std::time;
 
 use anyhow::Result;
+use async_std::sync::{Arc, Mutex};
 use async_std::task;
 use futures::SinkExt;
 use protobuf::Message;
 
-use crate::{Peers, WorldState};
-use schema::heartbeat;
+use schema::{heartbeat, world};
 
 // Publish world state at a regular interval.
-pub async fn publish<T>(outgoing: &mut T, world_state: WorldState, peers: Peers) -> Result<()>
+pub async fn publish<T>(
+    outgoing: &mut T,
+    world_state: Arc<world::World>,
+    peers: Arc<Mutex<HashSet<SocketAddr>>>,
+) -> Result<()>
 where
     T: futures::Sink<tungstenite::Message> + std::marker::Unpin,
     T::Error: std::error::Error + Send + Sync + 'static,
@@ -41,7 +47,7 @@ mod tests {
     #[async_std::test]
     async fn test_publish() -> Result<()> {
         let mut sink = VecDeque::new();
-        let world = WorldState::new(world::World::new());
+        let world = Arc::new(world::World::new());
         let peers = [SocketAddr::new(
             std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)),
             69,
