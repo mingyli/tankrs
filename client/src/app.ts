@@ -86,7 +86,7 @@ function init() {
   });
 
   // Listen for messages.
-  socket.addEventListener("message", function (event:MessageEvent) {
+  socket.addEventListener("message", function (event: MessageEvent) {
     const data = event.data;
     console.log("Received: ", data);
 
@@ -98,7 +98,7 @@ function init() {
     // Reset canvas.
     brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
     canvas.draw_axis(brush);
-    
+
     // Parse into protobuf.
     const serverMsg = ServerMessage.deserializeBinary(new Uint8Array(data));
     if (serverMsg.hasHeartbeat()) {
