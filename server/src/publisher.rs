@@ -57,13 +57,13 @@ mod tests {
         .iter()
         .cloned()
         .collect();
-        let peers = schema::Peers::new(Mutex::new(peers));
+        let peers = Arc::new(Mutex::new(peers));
         let publish_future = publish(&mut sink, world.clone(), peers.clone());
         let timeout = time::Duration::from_secs_f32(1.5);
 
         let expected = {
-            let mut expected = schema::Heartbeat::new();
-            expected.set_world(World::new());
+            let mut expected = schema::ServerMessage::new();
+            expected.mut_heartbeat().set_world(World::new());
             expected
         };
         assert!(async_std::future::timeout(timeout, publish_future)

@@ -4,7 +4,7 @@ use futures::{SinkExt, StreamExt};
 use protobuf::Message;
 use url::Url;
 
-use schema::{action, heartbeat};
+use schema::action;
 
 async fn run() -> anyhow::Result<()> {
     let (socket, response) = connect_async(Url::parse("ws://localhost:9001/socket")?).await?;
