@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 
 use anyhow::Result;
 use async_std::net::{TcpListener, TcpStream};
-use async_std::sync::{Arc, Mutex};
+use async_std::sync::{Arc, Mutex, RwLock};
 use async_std::task;
 use futures::StreamExt;
 use log::{debug, info, warn};
@@ -16,7 +16,7 @@ async fn handle_client(
     address: SocketAddr,
     actions: Arc<Mutex<VecDeque<Vec<u8>>>>,
     peers: Arc<Mutex<HashSet<SocketAddr>>>,
-    world_state: Arc<schema::World>,
+    world_state: Arc<RwLock<schema::World>>,
 ) -> Result<()> {
     info!("Handling client.");
 
@@ -58,7 +58,7 @@ async fn run() -> Result<()> {
     });
     world.mut_tanks().push(schema::Tank::new());
     world.mut_tanks().push(schema::Tank::new());
-    let world = Arc::new(world);
+    let world = Arc::new(RwLock::new(world));
 
     // Spawn task to consume actions from action queue.
     task::spawn(listener::apply_actions(actions.clone()));

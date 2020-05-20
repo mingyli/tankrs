@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use std::time;
 
 use anyhow::Result;
-use async_std::sync::{Arc, Mutex};
+use async_std::sync::{Arc, Mutex, RwLock};
 use async_std::task;
 use futures::SinkExt;
 use protobuf::Message;
@@ -11,7 +11,7 @@ use protobuf::Message;
 // Publish world state at a regular interval.
 pub async fn publish<T>(
     outgoing: &mut T,
-    world_state: Arc<schema::World>,
+    world_state: Arc<RwLock<schema::World>>,
     peers: Arc<Mutex<HashSet<SocketAddr>>>,
 ) -> Result<()>
 where
@@ -22,7 +22,7 @@ where
         let mut server_message = schema::ServerMessage::new();
         server_message
             .mut_heartbeat()
-            .set_world((*world_state).clone());
+            .set_world(world_state.read().await.clone());
         outgoing
             .send(tungstenite::Message::Binary(
                 server_message.write_to_bytes()?,
@@ -49,7 +49,7 @@ mod tests {
     #[async_std::test]
     async fn test_publish() -> Result<()> {
         let mut sink = VecDeque::new();
-        let world = Arc::new(World::new());
+        let world = Arc::new(RwLock::new(World::new()));
         let peers = [SocketAddr::new(
             std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)),
             69,
