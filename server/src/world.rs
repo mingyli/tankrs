@@ -1,10 +1,13 @@
+#![allow(dead_code)]
 use std::collections::HashMap;
 
+use log::warn;
 use rand::Rng;
-use schema::actions_generated::Movement;
+use schema::action;
 use uuid::Uuid;
 
 use crate::math::Vec2;
+use schema;
 
 // TODO(mluogh): replace with config.toml
 const TICKS_PER_SECOND: i32 = 10;
@@ -22,12 +25,12 @@ pub struct Tank {
 
 pub struct PlayerAction {
     pub player_id: Uuid,
-    pub action: Movement,
+    pub control: action::KeyPress,
 }
 
 impl PlayerAction {
-    pub fn new(player_id: Uuid, action: Movement) -> PlayerAction {
-        PlayerAction { player_id, action }
+    pub fn new(player_id: Uuid, control: action::KeyPress) -> PlayerAction {
+        PlayerAction { player_id, control }
     }
 }
 
@@ -53,12 +56,13 @@ impl Tank {
         }
     }
 
-    pub fn apply_controls(&mut self, movement: Movement) {
+    pub fn apply_controls(&mut self, movement: action::KeyPress) {
         match movement {
-            Movement::KeyUp => self.vel += Vec2::UP * Self::BASE_ACCEL_PER_TICK,
-            Movement::KeyDown => self.vel += Vec2::DOWN * Self::BASE_ACCEL_PER_TICK,
-            Movement::KeyLeft => self.vel += Vec2::LEFT * Self::BASE_ACCEL_PER_TICK,
-            Movement::KeyRight => self.vel += Vec2::RIGHT * Self::BASE_ACCEL_PER_TICK,
+            action::KeyPress::UP => self.vel += Vec2::UP * Self::BASE_ACCEL_PER_TICK,
+            action::KeyPress::DOWN => self.vel += Vec2::DOWN * Self::BASE_ACCEL_PER_TICK,
+            action::KeyPress::LEFT => self.vel += Vec2::LEFT * Self::BASE_ACCEL_PER_TICK,
+            action::KeyPress::RIGHT => self.vel += Vec2::RIGHT * Self::BASE_ACCEL_PER_TICK,
+            action::KeyPress::UNKNOWN => warn!("Unknown key press."),
         }
     }
 
@@ -91,7 +95,7 @@ impl World {
     pub fn apply_player_actions(&mut self, actions: Vec<PlayerAction>) {
         for user_action in actions {
             match self.tanks.get_mut(&user_action.player_id) {
-                Some(tank) => tank.apply_controls(user_action.action),
+                Some(tank) => tank.apply_controls(user_action.control),
                 None => continue,
             }
         }
@@ -122,25 +126,25 @@ mod tests {
     fn tank_can_be_moved() {
         let mut tank = Tank::new(Uuid::new_v4(), Vec2::new(0.0, 0.0));
 
-        tank.apply_controls(Movement::KeyRight);
+        tank.apply_controls(action::KeyPress::RIGHT);
         // Equivalent to two ticks of game.
         tank.update_pos();
         tank.update_pos();
         assert_eq!(tank.pos, Vec2::new(0.2, 0.0));
 
-        tank.apply_controls(Movement::KeyLeft);
+        tank.apply_controls(action::KeyPress::LEFT);
         tank.update_pos();
-        tank.apply_controls(Movement::KeyLeft);
+        tank.apply_controls(action::KeyPress::LEFT);
         tank.update_pos();
         assert_eq!(tank.pos, Vec2::new(0.1, 0.0));
-        tank.apply_controls(Movement::KeyRight);
+        tank.apply_controls(action::KeyPress::RIGHT);
 
-        tank.apply_controls(Movement::KeyUp);
+        tank.apply_controls(action::KeyPress::UP);
         tank.update_pos();
         tank.update_pos();
         assert_eq!(tank.pos, Vec2::new(0.1, 0.2));
 
-        tank.apply_controls(Movement::KeyDown);
+        tank.apply_controls(action::KeyPress::DOWN);
         tank.update_pos();
         assert_eq!(tank.pos, Vec2::new(0.1, 0.2));
     }
@@ -174,8 +178,8 @@ mod tests {
         let p2_original_y = world.tank_for_player(p2_id).unwrap().pos.y;
 
         let mut player_actions = Vec::new();
-        player_actions.push(PlayerAction::new(p1_id, Movement::KeyUp));
-        player_actions.push(PlayerAction::new(p2_id, Movement::KeyDown));
+        player_actions.push(PlayerAction::new(p1_id, action::KeyPress::UP));
+        player_actions.push(PlayerAction::new(p2_id, action::KeyPress::DOWN));
         world.apply_player_actions(player_actions);
         world.tick();
 

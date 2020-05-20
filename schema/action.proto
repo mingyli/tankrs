@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+enum KeyPress {
+  UNKNOWN = 0;
+  UP = 1;
+  DOWN = 2;
+  LEFT = 3;
+  RIGHT = 4;
+}
+
+message Action {
+  oneof action {
+    KeyPress key_press = 1;
+  }
+}

@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+import "world.proto";
+
+message Heartbeat {
+  oneof heartbeat {
+    World world = 1;
+  }
+}
