@@ -78,6 +78,7 @@ function init() {
   canvas.draw_axis(brush);
   // Create WebSocket connection.
   const socket = new WebSocket("ws://localhost:9001");
+  socket.binaryType = "arraybuffer";
 
   // Connection opened.
   socket.addEventListener("open", function (event) {
@@ -85,20 +86,21 @@ function init() {
   });
 
   // Listen for messages.
-  socket.addEventListener("message", async function (event) {
+  socket.addEventListener("message", function (event:MessageEvent) {
     const data = event.data;
     console.log("Received: ", data);
 
-    // Create brush.
-    brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
-    canvas.draw_axis(brush);
-    if (typeof data != "object") {
+    // Check if data is an ArrayBuffer.
+    if (!(event.data instanceof ArrayBuffer)) {
       return;
     }
 
-    // Parse into flatbuffer.
-    const arrBuf = await data.arrayBuffer();
-    const serverMsg = ServerMessage.deserializeBinary(arrBuf);
+    // Reset canvas.
+    brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
+    canvas.draw_axis(brush);
+    
+    // Parse into protobuf.
+    const serverMsg = ServerMessage.deserializeBinary(new Uint8Array(data));
     if (serverMsg.hasHeartbeat()) {
       const tanks = serverMsg.getHeartbeat()!.getWorld()!.getTanksList();
       for (var tank of tanks) {
