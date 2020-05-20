@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+import "heartbeat.proto";
+
+// The message published by the server.
+message ServerMessage {
+  oneof message {
+    Heartbeat heartbeat = 1;
+  }
+}

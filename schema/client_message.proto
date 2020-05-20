@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+import "action.proto";
+
+// The message published by the client.
+message ClientMessage {
+  oneof message {
+    Action action = 1;
+  }
+}

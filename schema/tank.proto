@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+import "geometry.proto";
+
+message Tank {
+  Vec2 position = 1;
+}

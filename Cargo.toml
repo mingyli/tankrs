@@ -15,7 +15,7 @@ name = "client"
 
 [dependencies]
 schema = { path = "schema/rust" }
-flatbuffers = "0.6.1"
+protobuf = "2"
 tungstenite = "0.10.1"
 futures = "0.3.5"
 async-tungstenite = { version = "0.4.2", features = ["async-std-runtime"] }
