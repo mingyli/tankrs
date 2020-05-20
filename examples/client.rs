@@ -46,9 +46,9 @@ async fn run() -> anyhow::Result<()> {
                     println!("Received text: {}", text);
                 }
                 tungstenite::Message::Binary(buffer) => {
-                    let heartbeat: heartbeat::Heartbeat =
+                    let server_message: schema::ServerMessage =
                         protobuf::parse_from_bytes(&buffer).unwrap();
-                    println!("{:?}", heartbeat);
+                    println!("{:?}", server_message);
                 }
                 _ => {
                     println!("Received other");

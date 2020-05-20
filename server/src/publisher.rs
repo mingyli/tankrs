@@ -19,10 +19,14 @@ where
     T::Error: std::error::Error + Send + Sync + 'static,
 {
     loop {
-        let mut heartbeat = schema::Heartbeat::new();
-        heartbeat.set_world((*world_state).clone());
+        let mut server_message = schema::ServerMessage::new();
+        server_message
+            .mut_heartbeat()
+            .set_world((*world_state).clone());
         outgoing
-            .send(tungstenite::Message::Binary(heartbeat.write_to_bytes()?))
+            .send(tungstenite::Message::Binary(
+                server_message.write_to_bytes()?,
+            ))
             .await?;
         outgoing
             .send(tungstenite::Message::Text(format!(
