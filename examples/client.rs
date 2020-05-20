@@ -29,7 +29,7 @@ async fn run() -> anyhow::Result<()> {
             let action = actions_generated::ActionRoot::create(
                 &mut builder,
                 &actions_generated::ActionRootArgs {
-                    movement: actions_generated::Movement::Up,
+                    movement: actions_generated::Movement::KeyUp,
                 },
             );
             builder.finish(action, None);

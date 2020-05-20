@@ -1,9 +1,9 @@
 // All we need for v0 is 4 way movement.
 enum Movement : byte {
-  Up,
-  Down,
-  Left,
-  Right,
+  KeyUp,
+  KeyDown,
+  KeyLeft,
+  KeyRight,
 }
 
 // TODO: add other action types to this (e.g. shooting).

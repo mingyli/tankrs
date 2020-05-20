@@ -9,15 +9,15 @@ use async_std::task;
 use futures::{stream, SinkExt, StreamExt};
 use log::{debug, info, warn};
 use tungstenite::Message;
+use uuid::Uuid;
 
 use schema::actions_generated::get_root_as_action_root;
 
 mod math;
 mod serialization;
 mod world;
-use math::Vec2;
 use serialization::{Buffer, Config, SerializableAsMessage};
-use world::{Tank, World};
+use world::World;
 
 type Peers = Arc<Mutex<HashSet<SocketAddr>>>;
 type WorldState = Arc<Buffer>;
@@ -137,12 +137,13 @@ async fn run() -> Result<()> {
 
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024);
     let mut world = World::new();
+    let first_uuid = Uuid::new_v4();
 
-    world.register_player(0);
-    world.register_player(1);
-    world.register_player(2);
+    world.register_player(first_uuid);
+    world.register_player(Uuid::new_v4());
+    world.register_player(Uuid::new_v4());
 
-    let world = Arc::new(world.serialize(&mut builder, &Config::new(0))?);
+    let world = Arc::new(world.serialize(&mut builder, &Config::new(first_uuid))?);
 
     // Listen for new WebSocket connections.
     while let Ok((stream, address)) = tcp_listener.accept().await {
