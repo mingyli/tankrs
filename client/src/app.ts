@@ -1,7 +1,4 @@
-import { flatbuffers } from "flatbuffers";
-import * as Messages from "./flatschema/messages_generated";
-import * as World from "./flatschema/world_generated";
-
+import { ServerMessage } from "./protobuf/server_message_pb";
 // Point.
 class Point {
   x: number;
@@ -81,6 +78,7 @@ function init() {
   canvas.draw_axis(brush);
   // Create WebSocket connection.
   const socket = new WebSocket("ws://localhost:9001");
+  socket.binaryType = "arraybuffer";
 
   // Connection opened.
   socket.addEventListener("open", function (event) {
@@ -88,36 +86,30 @@ function init() {
   });
 
   // Listen for messages.
-  socket.addEventListener("message", async function (event) {
+  socket.addEventListener("message", function (event: MessageEvent) {
     const data = event.data;
     console.log("Received: ", data);
 
-    // Create brush.
-    brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
-    canvas.draw_axis(brush);
-    if (typeof data != "object") {
+    // Check if data is an ArrayBuffer.
+    if (!(event.data instanceof ArrayBuffer)) {
       return;
     }
 
-    // Parse into flatbuffer.
-    const arrBuf = await data.arrayBuffer();
-    const buf = new flatbuffers.ByteBuffer(new Uint8Array(arrBuf));
-    const message = Messages.MessageRoot.getRootAsMessageRoot(buf);
-    if (message.messageType() == Messages.Message.GameParams) {
-      console.log("Initial game params");
-    } else if (message.messageType() == Messages.Message.WorldState) {
-      const world = message.message(new Messages.WorldState())!;
+    // Reset canvas.
+    brush.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height);
+    canvas.draw_axis(brush);
 
-      const playerPos = world.player()!.pos()!;
-      brush.fillStyle = "#FF0000";
-      canvas.draw_box(brush, new Point(playerPos.x(), playerPos.y()));
-      console.log("Player at: ", playerPos.x(), playerPos.y());
-
-      for (let i = 0; i < world.othersLength(); ++i) {
-        const pos = world.others(i, new World.Tank())!.pos()!;
-        brush.fillStyle = "#000000";
-        canvas.draw_box(brush, new Point(pos.x(), pos.y()));
-        console.log("Others at", pos.x(), pos.y());
+    // Parse into protobuf.
+    const serverMsg = ServerMessage.deserializeBinary(new Uint8Array(data));
+    if (serverMsg.hasHeartbeat()) {
+      const tanks = serverMsg.getHeartbeat()!.getWorld()!.getTanksList();
+      for (var tank of tanks) {
+        if (tank.hasPosition()) {
+          const pos = tank.getPosition()!;
+          brush.fillStyle = "#000000";
+          canvas.draw_box(brush, new Point(pos.getX(), pos.getY()));
+          console.log("Tank at", pos.getX(), pos.getY());
+        }
       }
     }
   });

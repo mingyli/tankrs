@@ -98,6 +98,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install Protoc
+        uses: arduino/setup-protoc@master
       - run: yarn install
       - run: make all
         working-directory: ${{env.working-directory}}
