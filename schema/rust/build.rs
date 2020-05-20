@@ -10,6 +10,8 @@ fn main() -> Result<()> {
             "../heartbeat.proto",
             "../world.proto",
             "../tank.proto",
+            "../client_message.proto",
+            "../server_message.proto",
         ])
         .include("../")
         .customize(protobuf_codegen_pure::Customize {

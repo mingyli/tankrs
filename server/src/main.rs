@@ -8,7 +8,6 @@ use async_std::task;
 use futures::StreamExt;
 use log::{debug, info, warn};
 
-use schema::{geometry, tank, world};
 mod listener;
 mod publisher;
 
@@ -17,7 +16,7 @@ async fn handle_client(
     address: SocketAddr,
     actions: Arc<Mutex<VecDeque<Vec<u8>>>>,
     peers: Arc<Mutex<HashSet<SocketAddr>>>,
-    world_state: Arc<world::World>,
+    world_state: Arc<schema::World>,
 ) -> Result<()> {
     info!("Handling client.");
 
@@ -47,18 +46,18 @@ async fn run() -> Result<()> {
     let peers = Arc::new(Mutex::new(HashSet::new()));
     let actions = Arc::new(Mutex::new(VecDeque::<Vec<u8>>::new()));
 
-    let mut world = world::World::new();
+    let mut world = schema::World::new();
     world.mut_tanks().push({
-        let mut tank = tank::Tank::new();
-        tank.set_position(geometry::Vec2 {
+        let mut tank = schema::Tank::new();
+        tank.set_position(schema::Vec2 {
             x: 4.5,
             y: 6.7,
-            ..geometry::Vec2::default()
+            ..schema::Vec2::default()
         });
         tank
     });
-    world.mut_tanks().push(tank::Tank::new());
-    world.mut_tanks().push(tank::Tank::new());
+    world.mut_tanks().push(schema::Tank::new());
+    world.mut_tanks().push(schema::Tank::new());
     let world = Arc::new(world);
 
     // Spawn task to consume actions from action queue.
