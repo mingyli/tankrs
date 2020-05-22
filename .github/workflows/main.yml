@@ -1,4 +1,10 @@
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 name: Continuous integration
 
@@ -92,6 +98,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install Protoc
+        uses: arduino/setup-protoc@master
       - run: yarn install
       - run: make all
         working-directory: ${{env.working-directory}}
