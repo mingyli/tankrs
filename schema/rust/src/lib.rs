@@ -8,6 +8,7 @@ pub mod server_message;
 pub mod tank;
 pub mod world;
 
+pub use action::Action;
 pub use client_message::ClientMessage;
 pub use geometry::Vec2;
 pub use heartbeat::Heartbeat;

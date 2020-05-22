@@ -13,14 +13,11 @@ impl Vec2 {
     pub const RIGHT: Vec2 = Vec2 { x: 1.0, y: 0.0 };
 
     pub fn new(x: f32, y: f32) -> Vec2 {
-        Vec2{
-            x,
-            y,
-        }
+        Vec2 { x, y }
     }
 }
 
-impl_op_ex!(+ |a: &Vec2, b: &Vec2| -> Vec2 { 
+impl_op_ex!(+ |a: &Vec2, b: &Vec2| -> Vec2 {
     Vec2 {
         x: a.x + b.x, 
         y: a.y + b.y
@@ -34,7 +31,7 @@ impl_op_ex!(-|a: &Vec2, b: &Vec2| -> Vec2 {
     }
 });
 
-impl_op_ex!(+= |a: &mut Vec2, b: &Vec2| { 
+impl_op_ex!(+= |a: &mut Vec2, b: &Vec2| {
     a.x += b.x;
     a.y += b.y
 });
