@@ -1,4 +1,6 @@
-import { ServerMessage } from './protobuf/server_message_pb'
+import { ServerMessage} from './protobuf/server_message_pb'
+import { Tank } from './protobuf/tank_pb'
+import { Vec2 } from './protobuf/geometry_pb'
 import { Action, KeyPress } from './protobuf/action_pb'
 // Point.
 class Point {
@@ -83,13 +85,13 @@ function init() {
   socket.binaryType = 'arraybuffer'
 
   // Connection opened.
-  socket.addEventListener('open', function (event) {
+  socket.addEventListener('open', (_) => {
     socket.send('Hello world!')
     socketOpened = true
   })
 
   // Listen for messages.
-  socket.addEventListener('message', function (event: MessageEvent) {
+  socket.addEventListener('message', (event: MessageEvent) => {
     const data = event.data
     console.log('Received: ', data)
 
@@ -110,9 +112,9 @@ function init() {
         .getHeartbeat()!
         .getWorld()!
         .getTanksList()
-        .filter((tank) => tank.hasPosition())
-        .map((tank) => tank.getPosition()!)
-        .forEach(function (pos) {
+        .filter((tank: Tank) => tank.hasPosition())
+        .map((tank: Tank) => tank.getPosition()!)
+        .forEach((pos: Vec2) => {
           canvas.draw_box(brush, new Point(pos.getX(), pos.getY()))
           console.log('Tank at', pos.getX(), pos.getY())
         })
@@ -141,10 +143,10 @@ function init() {
   ]
 
   // Keydown & keyup event handlers.
-  document.addEventListener('keyup', function (event: KeyboardEvent) {
+  document.addEventListener('keyup', (event: KeyboardEvent) => {
     keyMap.set(event.key, false)
   })
-  document.addEventListener('keydown', function (event: KeyboardEvent) {
+  document.addEventListener('keydown', (event: KeyboardEvent) => {
     keyMap.set(event.key, true)
   })
 
