@@ -19,9 +19,9 @@ impl Vec2 {
 
 impl_op_ex!(+ |a: &Vec2, b: &Vec2| -> Vec2 {
     Vec2 {
-        x: a.x + b.x, 
-        y: a.y + b.y
-    } 
+        x: a.x + b.x,
+        y: a.y + b.y,
+    }
 });
 
 impl_op_ex!(-|a: &Vec2, b: &Vec2| -> Vec2 {
@@ -33,7 +33,7 @@ impl_op_ex!(-|a: &Vec2, b: &Vec2| -> Vec2 {
 
 impl_op_ex!(+= |a: &mut Vec2, b: &Vec2| {
     a.x += b.x;
-    a.y += b.y
+    a.y += b.y;
 });
 
 impl_op_ex_commutative!(*|magnitude: f32, vec: &Vec2| -> Vec2 {
