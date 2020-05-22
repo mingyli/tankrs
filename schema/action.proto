@@ -9,7 +9,5 @@ enum KeyPress {
 }
 
 message Action {
-  oneof action {
-    KeyPress key_press = 1;
-  }
+  repeated KeyPress actions = 1;
 }
