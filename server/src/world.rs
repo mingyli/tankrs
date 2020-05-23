@@ -28,6 +28,7 @@ pub struct Tank {
     acceleration: Vec2,
 }
 
+#[derive(Debug)]
 pub struct PlayerAction {
     pub player_id: Uuid,
     pub control: Vec<action::KeyPress>,
@@ -146,31 +147,31 @@ mod tests {
     fn tank_can_be_moved() -> Result<()> {
         let mut tank = Tank::new(Uuid::new_v4(), Vec2::new(0.0, 0.0));
 
-        tank.apply_controls(action::KeyPress::RIGHT)?;
+        tank.apply_controls(vec![action::KeyPress::RIGHT])?;
         // Equivalent to two ticks of game.
         let first_x = tank.update_pos().x;
         let second_x = tank.update_pos().x;
         assert!(0.0 < first_x && first_x < second_x);
 
-        tank.apply_controls(action::KeyPress::LEFT)?;
+        tank.apply_controls(vec![action::KeyPress::LEFT])?;
         let third_x = tank.update_pos().x;
-        tank.apply_controls(action::KeyPress::LEFT)?;
+        tank.apply_controls(vec![action::KeyPress::LEFT])?;
         let fourth_x = tank.update_pos().x;
         assert!(third_x > fourth_x);
 
-        tank.apply_controls(action::KeyPress::LEFT)?;
+        tank.apply_controls(vec![action::KeyPress::LEFT])?;
         let last_x = tank.update_pos().x;
 
         assert!(last_x < fourth_x);
 
-        tank.apply_controls(action::KeyPress::UP)?;
+        tank.apply_controls(vec![action::KeyPress::UP])?;
         let first_y = tank.update_pos().y;
         let second_y = tank.update_pos().y;
         assert!(0.0 < first_y && first_y < second_y);
 
-        tank.apply_controls(action::KeyPress::DOWN)?;
+        tank.apply_controls(vec![action::KeyPress::DOWN])?;
         tank.update_pos();
-        tank.apply_controls(action::KeyPress::DOWN)?;
+        tank.apply_controls(vec![action::KeyPress::DOWN])?;
         let third_y = tank.update_pos().y;
         assert!(third_y < second_y);
 
@@ -206,8 +207,8 @@ mod tests {
         let p2_original_y = world.tank_for_player(p2_id).unwrap().pos.y;
 
         let mut player_actions = Vec::new();
-        player_actions.push(PlayerAction::new(p1_id, action::KeyPress::UP));
-        player_actions.push(PlayerAction::new(p2_id, action::KeyPress::DOWN));
+        player_actions.push(PlayerAction::new(p1_id, vec![action::KeyPress::UP]));
+        player_actions.push(PlayerAction::new(p2_id, vec![action::KeyPress::DOWN]));
         world.apply_player_actions(player_actions);
         world.tick();
 

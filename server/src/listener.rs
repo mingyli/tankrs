@@ -88,9 +88,9 @@ mod tests {
             Ok(tungstenite::Message::Close(None)),
             Ok(tungstenite::Message::Text("bye".to_string())),
         ]);
-        let actions = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
-        listen(&mut stream, actions.clone()).await?;
-        assert_eq!(*actions.lock().await, Vec::<Vec<u8>>::new());
+        let actions = Arc::new(Mutex::new(Vec::<world::PlayerAction>::new()));
+        listen(Uuid::new_v4(), &mut stream, Arc::clone(&actions)).await?;
+        assert_eq!(actions.lock().await.len(), 0);
         Ok(())
     }
 }
