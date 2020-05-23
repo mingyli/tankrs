@@ -80,7 +80,7 @@ function init() {
   const brush = canvas.canvas.getContext('2d')!
   canvas.draw_axis(brush)
   // Create WebSocket connection.
-  const socket = new WebSocket('ws://localhost:9001')
+  const socket = new WebSocket('ws://5b0e212f.ngrok.io:9001')
   let socketOpened = false
   socket.binaryType = 'arraybuffer'
 
@@ -152,7 +152,7 @@ function init() {
   })
 
   // tick is in MS.
-  const tick = 1000 / 10
+  const tick = 1000 / 60
 
   const eventLoop = setInterval(function () {
     const action = new Action()

@@ -22,7 +22,7 @@ where
                 server_message.write_to_bytes()?,
             ))
             .await?;
-        task::sleep(time::Duration::from_millis(100)).await;
+        task::sleep(time::Duration::from_millis(17)).await;
     }
 }
 

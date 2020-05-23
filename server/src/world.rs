@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::math::Vec2;
 
 // TODO(mluogh): replace with config.toml
-const TICKS_PER_SECOND: i8 = 10;
+const TICKS_PER_SECOND: i8 = 60;
 //#[allow(clippy::cast_precision_loss)]
 const TIME_PER_TICK: f32 = 1.0 / TICKS_PER_SECOND as f32;
 const TIME_PER_TICK_SQUARED: f32 = TIME_PER_TICK * TIME_PER_TICK;
@@ -43,7 +43,7 @@ impl PlayerAction {
 impl Tank {
     // TODO(mluogh): replace base accel with config.toml
     // Default acceleration per second (no powerups/boost).
-    const BASE_ACCELERATION: f32 = 0.001;
+    const BASE_ACCELERATION: f32 = 10.0;
 
     pub fn player(&self) -> Uuid {
         self.player_id
@@ -79,7 +79,7 @@ impl Tank {
     }
 
     pub fn update_pos(&mut self) -> Vec2 {
-        self.pos += self.velocity * TIME_PER_TICK + self.acceleration * (TIME_PER_TICK_SQUARED);
+        self.pos += self.acceleration * TIME_PER_TICK;
         self.velocity += self.acceleration * TIME_PER_TICK;
         self.acceleration = Vec2::new(0.0, 0.0);
         self.pos
