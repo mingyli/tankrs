@@ -63,6 +63,7 @@ impl Tank {
     }
 
     pub fn apply_controls(&mut self, controls: Vec<action::KeyPress>) -> Result<()> {
+        println!("before acceleration: {}, {}", self.acceleration.x, self.acceleration.y);
         for control in controls {
             match control {
                 action::KeyPress::UP => self.acceleration += Vec2::UP,
@@ -72,6 +73,7 @@ impl Tank {
                 action::KeyPress::UNKNOWN => return Err(anyhow!("Unknown control command.")),
             };
         }
+        println!("after acceleration: {}, {}", self.acceleration.x, self.acceleration.y);
 
         self.acceleration = self.acceleration * Self::BASE_ACCELERATION;
 
@@ -79,7 +81,9 @@ impl Tank {
     }
 
     pub fn update_pos(&mut self) -> Vec2 {
+        // println!("Before: {}, {}", self.pos.x, self.pos.y);
         self.pos += self.acceleration * TIME_PER_TICK;
+        // println!("After: {}, {}", self.pos.x, self.pos.y);
         self.velocity += self.acceleration * TIME_PER_TICK;
         self.acceleration = Vec2::new(0.0, 0.0);
         self.pos

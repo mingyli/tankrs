@@ -80,12 +80,13 @@ function init() {
   const brush = canvas.canvas.getContext('2d')!
   canvas.draw_axis(brush)
   // Create WebSocket connection.
-  const socket = new WebSocket('ws://5b0e212f.ngrok.io:9001')
+  const socket = new WebSocket('ws://b88cfba8.ngrok.io')
   let socketOpened = false
   socket.binaryType = 'arraybuffer'
 
   // Connection opened.
   socket.addEventListener('open', (_) => {
+    console.log("asdfds")
     socket.send('Hello world!')
     socketOpened = true
   })
