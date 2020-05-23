@@ -101,18 +101,24 @@ impl World {
         self.tanks.remove(&player_id);
     }
 
-    pub fn apply_player_actions(&mut self, actions: Vec<PlayerAction>) {
-        for user_action in actions {
-            match self.tanks.get_mut(&user_action.player_id) {
-                Some(tank) => {
-                    if let Err(msg) = tank.apply_controls(user_action.control) {
-                        warn!(
-                            "Player {:?} entered an erroneous control: {:?}",
-                            &user_action.player_id, msg
-                        );
-                    }
-                }
-                None => continue,
+    pub fn apply_player_action(&mut self, action: &PlayerAction) -> Result<()> {
+        if let Some(tank) = self.tanks.get_mut(&action.player_id) {
+            tank.apply_controls(action.control)
+        } else {
+            Err(anyhow!(
+                "Tank for player ID {} not found.",
+                action.player_id
+            ))
+        }
+    }
+
+    pub fn apply_player_actions(&mut self, actions: &[PlayerAction]) {
+        for action in actions {
+            if let Err(msg) = self.apply_player_action(action) {
+                warn!(
+                    "Player {} entered an erroneous control: {:?}",
+                    action.player_id, msg
+                );
             }
         }
     }
@@ -204,7 +210,7 @@ mod tests {
         let mut player_actions = Vec::new();
         player_actions.push(PlayerAction::new(p1_id, action::KeyPress::UP));
         player_actions.push(PlayerAction::new(p2_id, action::KeyPress::DOWN));
-        world.apply_player_actions(player_actions);
+        world.apply_player_actions(&player_actions);
         world.tick();
 
         let p1_tank = world.tank_for_player(p1_id).unwrap();
