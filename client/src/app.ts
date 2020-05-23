@@ -1,4 +1,4 @@
-import { ServerMessage} from './protobuf/server_message_pb'
+import { ServerMessage } from './protobuf/server_message_pb'
 import { Tank } from './protobuf/tank_pb'
 import { Vec2 } from './protobuf/geometry_pb'
 import { Action, KeyPress } from './protobuf/action_pb'
