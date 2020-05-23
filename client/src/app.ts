@@ -93,7 +93,7 @@ function init() {
   // Listen for messages.
   socket.addEventListener('message', (event: MessageEvent) => {
     const data = event.data
-    console.log('Received: ', data)
+    //console.log('Received: ', data)
 
     // Check if data is an ArrayBuffer.
     if (!(event.data instanceof ArrayBuffer)) {
@@ -105,7 +105,8 @@ function init() {
     canvas.draw_axis(brush)
 
     // Parse into protobuf.
-    const serverMsg = ServerMessage.deserializeBinary(new Uint8Array(data))
+    //const serverMsg = ServerMessage.deserializeBinary(new Uint8Array(data))
+    const serverMsg = ServerMessage.deserializeBinary(data)
     brush.fillStyle = '#000000'
     if (serverMsg.hasHeartbeat()) {
       serverMsg
@@ -115,7 +116,7 @@ function init() {
         .filter((tank: Tank) => tank.hasPosition())
         .map((tank: Tank) => tank.getPosition()!)
         .forEach((pos: Vec2) => {
-          canvas.draw_box(brush, new Point(pos.getX(), pos.getY()))
+          canvas.draw_box(brush, new Point(pos.getX(), -pos.getY()))
           console.log('Tank at', pos.getX(), pos.getY())
         })
     }
@@ -151,14 +152,15 @@ function init() {
   })
 
   // tick is in MS.
-  const tick = 1000 / 60
+  const tick = 1000 / 10
 
   const eventLoop = setInterval(function () {
     const action = new Action()
     keyToAction
       .filter((key) => keyMap.get(key.code))
       .forEach((key) => action.addActions(key.action))
-    if (socketOpened) {
+    if (socketOpened && action.getActionsList().length > 0) {
+      console.log(action.getActionsList().length);
       socket.send(action.serializeBinary())
     }
   }, tick)

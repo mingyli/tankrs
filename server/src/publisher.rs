@@ -1,25 +1,19 @@
-use std::collections::HashSet;
-use std::net::SocketAddr;
 use std::time;
 
 use anyhow::Result;
-use async_std::sync::{Arc, Mutex, RwLock};
+use async_std::sync::{Arc, RwLock};
 use async_std::task;
 use futures::SinkExt;
 use protobuf::Message;
 
 // Publish world state at a regular interval.
-pub async fn publish<T>(
-    outgoing: &mut T,
-    world_state: Arc<RwLock<schema::World>>,
-    peers: Arc<Mutex<HashSet<SocketAddr>>>,
-) -> Result<()>
+pub async fn publish<T>(outgoing: &mut T, world_state: Arc<RwLock<schema::World>>) -> Result<()>
 where
     T: futures::Sink<tungstenite::Message> + std::marker::Unpin,
     T::Error: std::error::Error + Send + Sync + 'static,
 {
+    let mut server_message = schema::ServerMessage::new();
     loop {
-        let mut server_message = schema::ServerMessage::new();
         server_message
             .mut_heartbeat()
             .set_world(world_state.read().await.clone());
@@ -28,13 +22,7 @@ where
                 server_message.write_to_bytes()?,
             ))
             .await?;
-        outgoing
-            .send(tungstenite::Message::Text(format!(
-                "Here are the peers connected to the server: {:?}",
-                peers.lock().await
-            )))
-            .await?;
-        task::sleep(time::Duration::from_secs(1)).await;
+        task::sleep(time::Duration::from_millis(100)).await;
     }
 }
 

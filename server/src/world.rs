@@ -30,11 +30,11 @@ pub struct Tank {
 
 pub struct PlayerAction {
     pub player_id: Uuid,
-    pub control: action::KeyPress,
+    pub control: Vec<action::KeyPress>,
 }
 
 impl PlayerAction {
-    pub fn new(player_id: Uuid, control: action::KeyPress) -> PlayerAction {
+    pub fn new(player_id: Uuid, control: Vec<action::KeyPress>) -> PlayerAction {
         PlayerAction { player_id, control }
     }
 }
@@ -42,7 +42,7 @@ impl PlayerAction {
 impl Tank {
     // TODO(mluogh): replace base accel with config.toml
     // Default acceleration per second (no powerups/boost).
-    const BASE_ACCELERATION: f32 = 1.0;
+    const BASE_ACCELERATION: f32 = 0.001;
 
     pub fn player(&self) -> Uuid {
         self.player_id
@@ -61,14 +61,18 @@ impl Tank {
         }
     }
 
-    pub fn apply_controls(&mut self, movement: action::KeyPress) -> Result<()> {
-        match movement {
-            action::KeyPress::UP => self.acceleration = Vec2::UP,
-            action::KeyPress::DOWN => self.acceleration = Vec2::DOWN,
-            action::KeyPress::LEFT => self.acceleration = Vec2::LEFT,
-            action::KeyPress::RIGHT => self.acceleration = Vec2::RIGHT,
-            action::KeyPress::UNKNOWN => return Err(anyhow!("Unknown control command.")),
-        };
+    pub fn apply_controls(&mut self, controls: Vec<action::KeyPress>) -> Result<()> {
+        for control in controls {
+            match control {
+                action::KeyPress::UP => self.acceleration += Vec2::UP,
+                action::KeyPress::DOWN => self.acceleration += Vec2::DOWN,
+                action::KeyPress::LEFT => self.acceleration += Vec2::LEFT,
+                action::KeyPress::RIGHT => self.acceleration += Vec2::RIGHT,
+                action::KeyPress::UNKNOWN => return Err(anyhow!("Unknown control command.")),
+            };
+        }
+
+        self.acceleration = self.acceleration * Self::BASE_ACCELERATION;
 
         Ok(())
     }
@@ -90,8 +94,8 @@ impl World {
 
     pub fn register_player(&mut self, player_id: Uuid) {
         let spawn_pos = Vec2::new(
-            rand::thread_rng().gen_range(-10.0, 10.0),
-            rand::thread_rng().gen_range(-10.0, 10.0),
+            rand::thread_rng().gen_range(0.0, 10.0),
+            rand::thread_rng().gen_range(0.0, 10.0),
         );
         let tank = Tank::new(player_id, spawn_pos);
         self.tanks.insert(player_id, tank);

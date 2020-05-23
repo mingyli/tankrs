@@ -1,6 +1,6 @@
 syntax = "proto3";
 
 message Vec2 {
-  double x = 1;
-  double y = 2;
+  float x = 1;
+  float y = 2;
 }
