@@ -14,11 +14,8 @@ tankrs is mainly written in `rust`. You will need the following
 - `rustfmt` for code formatting.
 - `rust-clippy` for writing idiomatic rust.
 
-tankrs uses `flatbuffers` to serialize data to transfer over wire.
-
-You will need to clone the GitHub repo and build the `flatc` binary.
-[This commit](https://github.com/google/flatbuffers/commit/c3faa83463ca2556d6e7ab5b696cc311951f5857)
-is confirmed to work, but HEAD should work unless otherwise noted.
+tankrs uses `protobuf` to serialize data to transfer over wire. You may need to compile
+`protoc` in order to generate protobuffers.
 
 ## Client
 
