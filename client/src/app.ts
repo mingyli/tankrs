@@ -116,7 +116,7 @@ function init() {
         .filter((tank: Tank) => tank.hasPosition())
         .map((tank: Tank) => tank.getPosition()!)
         .forEach((pos: Vec2) => {
-          canvas.draw_box(brush, new Point(pos.getX(), -pos.getY()))
+          canvas.draw_box(brush, new Point(pos.getX(), pos.getY()))
           console.log('Tank at', pos.getX(), pos.getY())
         })
     }
