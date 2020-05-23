@@ -25,7 +25,8 @@ async fn run() -> anyhow::Result<()> {
             .unwrap();
         loop {
             let mut action = action::Action::new();
-            action.set_key_press(action::KeyPress::DOWN);
+            action.mut_actions().push(action::KeyPress::DOWN);
+            //action.set_key_press(action::KeyPress::DOWN);
             write
                 .send(tungstenite::Message::Binary(
                     action.write_to_bytes().unwrap(),

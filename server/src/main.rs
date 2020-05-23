@@ -9,7 +9,9 @@ use futures::StreamExt;
 use log::{debug, info, warn};
 
 mod listener;
+mod math;
 mod publisher;
+mod world;
 
 async fn handle_client(
     stream: TcpStream,
