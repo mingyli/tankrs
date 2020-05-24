@@ -152,7 +152,7 @@ function init() {
   })
 
   // tick is in MS.
-  const tick = 1000 / 10
+  const tick = 1000 / 60
 
   const eventLoop = setInterval(function () {
     const action = new Action()
