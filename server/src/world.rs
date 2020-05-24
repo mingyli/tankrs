@@ -1,4 +1,3 @@
-// TODO(mluogh): remove after v0 is completed
 #![allow(dead_code)]
 use std::collections::HashMap;
 
