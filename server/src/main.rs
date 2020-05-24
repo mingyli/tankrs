@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::Result;
 use async_std::net::{TcpListener, TcpStream};
 use async_std::sync::{Arc, Mutex, RwLock};
@@ -15,7 +17,7 @@ mod world;
 async fn handle_client(
     player_id: Uuid,
     stream: TcpStream,
-    actions: Arc<Mutex<Vec<world::PlayerAction>>>,
+    actions: Arc<Mutex<HashMap<Uuid, world::PlayerAction>>>,
     world_state: Arc<RwLock<schema::World>>,
 ) -> Result<()> {
     info!("Handling client.");
@@ -39,7 +41,7 @@ async fn handle_client(
 async fn run() -> Result<()> {
     let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
     info!("Starting server");
-    let actions = Arc::new(Mutex::new(Vec::<world::PlayerAction>::new()));
+    let actions = Arc::new(Mutex::new(HashMap::new()));
 
     let world = Arc::new(Mutex::new(world::World::new()));
     let world_state = Arc::new(RwLock::new(schema::World::new()));

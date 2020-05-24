@@ -30,13 +30,12 @@ pub struct Tank {
 
 #[derive(Debug)]
 pub struct PlayerAction {
-    pub player_id: Uuid,
     pub control: Vec<action::KeyPress>,
 }
 
 impl PlayerAction {
-    pub fn new(player_id: Uuid, control: Vec<action::KeyPress>) -> PlayerAction {
-        PlayerAction { player_id, control }
+    pub fn new(control: Vec<action::KeyPress>) -> PlayerAction {
+        PlayerAction { control }
     }
 }
 
@@ -62,7 +61,7 @@ impl Tank {
         }
     }
 
-    pub fn apply_controls(&mut self, controls: Vec<action::KeyPress>) -> Result<()> {
+    pub fn apply_controls(&mut self, controls: &Vec<action::KeyPress>) -> Result<()> {
         for control in controls {
             match control {
                 action::KeyPress::UP => self.acceleration += Vec2::UP,
@@ -106,19 +105,22 @@ impl World {
         self.tanks.remove(&player_id);
     }
 
-    pub fn apply_player_actions(&mut self, actions: Vec<PlayerAction>) {
-        for user_action in actions {
-            match self.tanks.get_mut(&user_action.player_id) {
-                Some(tank) => {
-                    if let Err(msg) = tank.apply_controls(user_action.control) {
-                        warn!(
-                            "Player {:?} entered an erroneous control: {:?}",
-                            &user_action.player_id, msg
-                        );
-                    }
-                }
-                None => continue,
+    pub fn apply_player_actions(&mut self, actions: &HashMap<Uuid, PlayerAction>) {
+        for (player_id, user_action) in actions {
+            if let Err(msg) = self.apply_player_action(player_id, &user_action) {
+                warn!(
+                    "Player {} entered an erroneous control: {:?}",
+                    player_id, msg
+                );
             }
+        }
+    }
+
+    fn apply_player_action(&mut self, player_id: &Uuid, action: &PlayerAction) -> Result<()> {
+        if let Some(tank) = self.tanks.get_mut(player_id) {
+            tank.apply_controls(&action.control)
+        } else {
+            Err(anyhow!("Tank for player id {} not found.", player_id))
         }
     }
 
@@ -147,33 +149,33 @@ mod tests {
     fn tank_can_be_moved() -> Result<()> {
         let mut tank = Tank::new(Uuid::new_v4(), Vec2::new(0.0, 0.0));
 
-        tank.apply_controls(vec![action::KeyPress::RIGHT])?;
+        tank.apply_controls(&vec![action::KeyPress::RIGHT])?;
         // Equivalent to two ticks of game.
         let first_x = tank.update_pos().x;
         let second_x = tank.update_pos().x;
         assert!(0.0 < first_x && first_x < second_x);
 
-        tank.apply_controls(vec![action::KeyPress::LEFT])?;
+        tank.apply_controls(&vec![action::KeyPress::LEFT])?;
         let third_x = tank.update_pos().x;
-        tank.apply_controls(vec![action::KeyPress::LEFT])?;
+        tank.apply_controls(&vec![action::KeyPress::LEFT])?;
         let fourth_x = tank.update_pos().x;
         assert!(third_x > fourth_x);
 
-        tank.apply_controls(vec![action::KeyPress::LEFT])?;
+        tank.apply_controls(&vec![action::KeyPress::LEFT])?;
         let last_x = tank.update_pos().x;
 
         assert!(last_x < fourth_x);
 
-        tank.apply_controls(vec![action::KeyPress::UP])?;
+        tank.apply_controls(&vec![action::KeyPress::UP])?;
         let first_y = tank.update_pos().y;
         let second_y = tank.update_pos().y;
-        assert!(0.0 < first_y && first_y < second_y);
+        assert!(0.0 > first_y && first_y > second_y);
 
-        tank.apply_controls(vec![action::KeyPress::DOWN])?;
+        tank.apply_controls(&vec![action::KeyPress::DOWN])?;
         tank.update_pos();
-        tank.apply_controls(vec![action::KeyPress::DOWN])?;
+        tank.apply_controls(&vec![action::KeyPress::DOWN])?;
         let third_y = tank.update_pos().y;
-        assert!(third_y < second_y);
+        assert!(third_y > second_y);
 
         Ok(())
     }
@@ -206,16 +208,16 @@ mod tests {
         let p1_original_y = world.tank_for_player(p1_id).unwrap().pos.y;
         let p2_original_y = world.tank_for_player(p2_id).unwrap().pos.y;
 
-        let mut player_actions = Vec::new();
-        player_actions.push(PlayerAction::new(p1_id, vec![action::KeyPress::UP]));
-        player_actions.push(PlayerAction::new(p2_id, vec![action::KeyPress::DOWN]));
-        world.apply_player_actions(player_actions);
+        let mut player_actions = HashMap::new();
+        player_actions.insert(p1_id, PlayerAction::new(vec![action::KeyPress::UP]));
+        player_actions.insert(p2_id, PlayerAction::new(vec![action::KeyPress::DOWN]));
+        world.apply_player_actions(&player_actions);
         world.tick();
 
         let p1_tank = world.tank_for_player(p1_id).unwrap();
-        assert!(p1_tank.pos.y > p1_original_y);
+        assert!(p1_tank.pos.y < p1_original_y);
 
         let p2_tank = world.tank_for_player(p2_id).unwrap();
-        assert!(p2_tank.pos.y < p2_original_y);
+        assert!(p2_tank.pos.y > p2_original_y);
     }
 }

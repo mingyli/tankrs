@@ -160,7 +160,7 @@ function init() {
       .filter((key) => keyMap.get(key.code))
       .forEach((key) => action.addActions(key.action))
     if (socketOpened && action.getActionsList().length > 0) {
-      console.log(action.getActionsList().length);
+      console.log(action.getActionsList().length)
       socket.send(action.serializeBinary())
     }
   }, tick)
