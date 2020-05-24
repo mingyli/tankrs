@@ -72,7 +72,7 @@ pub async fn run_game_loop(
             let mut write_guard = world_state.write().await;
             *write_guard = world.lock().await.serialize();
         }
-        task::sleep(time::Duration::from_millis(00)).await;
+        task::sleep(time::Duration::from_millis(20)).await;
     }
 }
 

@@ -43,7 +43,7 @@ impl PlayerAction {
 impl Tank {
     // TODO(mluogh): replace base accel with config.toml
     // Default acceleration per second (no powerups/boost).
-    const BASE_ACCELERATION: f32 = 0.001;
+    const BASE_ACCELERATION: f32 = 0.1;
 
     pub fn player(&self) -> Uuid {
         self.player_id
