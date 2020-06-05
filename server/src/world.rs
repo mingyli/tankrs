@@ -210,6 +210,7 @@ mod tests {
         let mut player_actions = HashMap::new();
         player_actions.insert(p1_id, PlayerAction::new(vec![action::KeyPress::UP]));
         player_actions.insert(p2_id, PlayerAction::new(vec![action::KeyPress::DOWN]));
+
         world.apply_player_actions(&player_actions);
         world.tick();
 
