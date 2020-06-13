@@ -1,4 +1,5 @@
 #![allow(dead_code, unused_imports, clippy::all, clippy::pedantic)]
+#[rustfmt::skip]
 
 pub mod action;
 pub mod client_message;

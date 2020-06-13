@@ -60,7 +60,7 @@ impl Tank {
         }
     }
 
-    pub fn apply_controls(&mut self, controls: &Vec<action::KeyPress>) -> Result<()> {
+    pub fn apply_controls(&mut self, controls: &[action::KeyPress]) -> Result<()> {
         for control in controls {
             match control {
                 action::KeyPress::UP => self.acceleration += Vec2::UP,

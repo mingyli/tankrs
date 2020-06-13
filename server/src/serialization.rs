@@ -1,5 +1,3 @@
-use schema;
-
 use crate::world;
 
 pub trait Protobufferable {
