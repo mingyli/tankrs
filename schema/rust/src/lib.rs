@@ -1,11 +1,19 @@
 #![allow(dead_code, unused_imports, clippy::all, clippy::pedantic)]
 
+// TODO(mluog): rustfmt::skips can be removed on release of rust 1.44.1 and rust-protobuf > 2.14
+#[rustfmt::skip]
 pub mod action;
+#[rustfmt::skip]
 pub mod client_message;
+#[rustfmt::skip]
 pub mod geometry;
+#[rustfmt::skip]
 pub mod heartbeat;
+#[rustfmt::skip]
 pub mod server_message;
+#[rustfmt::skip]
 pub mod tank;
+#[rustfmt::skip]
 pub mod world;
 
 pub use action::Action;
