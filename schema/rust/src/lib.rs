@@ -1,6 +1,6 @@
 #![allow(dead_code, unused_imports, clippy::all, clippy::pedantic)]
 
-// TODO(mluog): rustfmt::skips can be removed on release of rust 1.44.1 and rust-protobuf > 2.14
+// TODO(mluogh): rustfmt::skips can be removed on release of rust 1.44.1 and rust-protobuf > 2.14
 #[rustfmt::skip]
 pub mod action;
 #[rustfmt::skip]

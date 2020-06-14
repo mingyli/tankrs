@@ -93,7 +93,7 @@ function init() {
   // Listen for messages.
   socket.addEventListener('message', (event: MessageEvent) => {
     const data = event.data
-    console.log('Received: ', data)
+    //console.log('Received: ', data)
 
     // Check if data is an ArrayBuffer.
     if (!(event.data instanceof ArrayBuffer)) {
@@ -105,7 +105,8 @@ function init() {
     canvas.draw_axis(brush)
 
     // Parse into protobuf.
-    const serverMsg = ServerMessage.deserializeBinary(new Uint8Array(data))
+    //const serverMsg = ServerMessage.deserializeBinary(new Uint8Array(data))
+    const serverMsg = ServerMessage.deserializeBinary(data)
     brush.fillStyle = '#000000'
     if (serverMsg.hasHeartbeat()) {
       serverMsg
@@ -158,7 +159,8 @@ function init() {
     keyToAction
       .filter((key) => keyMap.get(key.code))
       .forEach((key) => action.addActions(key.action))
-    if (socketOpened) {
+    if (socketOpened && action.getActionsList().length > 0) {
+      console.log(action.getActionsList().length)
       socket.send(action.serializeBinary())
     }
   }, tick)

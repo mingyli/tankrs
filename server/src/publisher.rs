@@ -1,25 +1,19 @@
-use std::collections::HashSet;
-use std::net::SocketAddr;
 use std::time;
 
 use anyhow::Result;
-use async_std::sync::{Arc, Mutex, RwLock};
+use async_std::sync::{Arc, RwLock};
 use async_std::task;
 use futures::SinkExt;
 use protobuf::Message;
 
 // Publish world state at a regular interval.
-pub async fn publish<T>(
-    outgoing: &mut T,
-    world_state: Arc<RwLock<schema::World>>,
-    peers: Arc<Mutex<HashSet<SocketAddr>>>,
-) -> Result<()>
+pub async fn publish<T>(outgoing: &mut T, world_state: Arc<RwLock<schema::World>>) -> Result<()>
 where
     T: futures::Sink<tungstenite::Message> + std::marker::Unpin,
     T::Error: std::error::Error + Send + Sync + 'static,
 {
+    let mut server_message = schema::ServerMessage::new();
     loop {
-        let mut server_message = schema::ServerMessage::new();
         server_message
             .mut_heartbeat()
             .set_world(world_state.read().await.clone());
@@ -28,38 +22,24 @@ where
                 server_message.write_to_bytes()?,
             ))
             .await?;
-        outgoing
-            .send(tungstenite::Message::Text(format!(
-                "Here are the peers connected to the server: {:?}",
-                peers.lock().await
-            )))
-            .await?;
-        task::sleep(time::Duration::from_secs(1)).await;
+        task::sleep(time::Duration::from_millis(100)).await;
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use async_std::sync::Mutex;
     use schema::World;
     use std::collections::VecDeque;
-    use std::net::SocketAddr;
 
+    // TODO(mluogh): this test is flaky, should not depend on time, inject a clock or move logic
+    // elsewhere
     #[async_std::test]
     async fn test_publish() -> Result<()> {
         let mut sink = VecDeque::new();
         let world = Arc::new(RwLock::new(World::new()));
-        let peers = [SocketAddr::new(
-            std::net::IpAddr::V4(std::net::Ipv4Addr::new(127, 0, 0, 1)),
-            69,
-        )]
-        .iter()
-        .cloned()
-        .collect();
-        let peers = Arc::new(Mutex::new(peers));
-        let publish_future = publish(&mut sink, world.clone(), peers.clone());
-        let timeout = time::Duration::from_secs_f32(1.5);
+        let publish_future = publish(&mut sink, world.clone());
+        let timeout = time::Duration::from_millis(50);
 
         let expected = {
             let mut expected = schema::ServerMessage::new();
@@ -73,13 +53,7 @@ mod tests {
             sink,
             vec![
                 tungstenite::Message::Binary(expected.write_to_bytes()?),
-                tungstenite::Message::Text(
-                    "Here are the peers connected to the server: {V4(127.0.0.1:69)}".to_string()
-                ),
-                tungstenite::Message::Binary(expected.write_to_bytes()?),
-                tungstenite::Message::Text(
-                    "Here are the peers connected to the server: {V4(127.0.0.1:69)}".to_string()
-                ),
+                //tungstenite::Message::Binary(expected.write_to_bytes()?),
             ]
         );
         Ok(())

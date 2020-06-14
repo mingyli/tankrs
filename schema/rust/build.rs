@@ -2,6 +2,7 @@ use anyhow::Result;
 
 fn main() -> Result<()> {
     // TODO(mluogh): Implement globbing again. Sorry!
+    println!("cargo:rerun-if-changed=../");
     protobuf_codegen_pure::Codegen::new()
         .out_dir("src/")
         .inputs(&[

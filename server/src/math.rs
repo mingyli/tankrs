@@ -7,8 +7,8 @@ pub struct Vec2 {
 }
 
 impl Vec2 {
-    pub const UP: Vec2 = Vec2 { x: 0.0, y: 1.0 };
-    pub const DOWN: Vec2 = Vec2 { x: 0.0, y: -1.0 };
+    pub const UP: Vec2 = Vec2 { x: 0.0, y: -1.0 };
+    pub const DOWN: Vec2 = Vec2 { x: 0.0, y: 1.0 };
     pub const LEFT: Vec2 = Vec2 { x: -1.0, y: 0.0 };
     pub const RIGHT: Vec2 = Vec2 { x: 1.0, y: 0.0 };
 
