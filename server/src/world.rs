@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 use std::collections::HashMap;
+use std::convert::From;
 
 use anyhow::{anyhow, Result};
 use log::warn;
@@ -137,6 +138,27 @@ impl World {
 
     pub fn tanks(&self) -> impl Iterator<Item = &'_ Tank> {
         self.tanks.values()
+    }
+}
+
+impl From<&Tank> for schema::Tank {
+    fn from(tank: &Tank) -> Self {
+        let mut vec_proto = schema::geometry::Vec2::new();
+        let mut proto = schema::Tank::new();
+        vec_proto.set_x(tank.pos().x);
+        vec_proto.set_y(tank.pos().y);
+        proto.set_position(vec_proto);
+        proto
+    }
+}
+
+impl From<&World> for schema::World {
+    fn from(world: &World) -> Self {
+        let mut proto = schema::World::new();
+        for tank in world.tanks() {
+            proto.mut_tanks().push(tank.into());
+        }
+        proto
     }
 }
 
