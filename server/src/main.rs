@@ -2,12 +2,9 @@ use std::collections::HashMap;
 use std::time;
 
 use anyhow::Result;
-// use async_std::net::{TcpListener, TcpStream};
 use async_std::sync::{Arc, Mutex, RwLock};
 use async_std::task;
 use log::error;
-// use log::{debug, info};
-// use uuid::Uuid;
 
 use crate::serialization::Protobufferable;
 

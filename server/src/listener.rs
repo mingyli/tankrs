@@ -49,13 +49,6 @@ where
 }
 
 // TODO(ming): Consume actions in non-blocking fashion instead of displaying actions periodically.
-// pub async fn run_game_loop(
-//     world: Arc<Mutex<world::World>>,
-//     actions: Arc<Mutex<HashMap<Uuid, world::PlayerAction>>>,
-//     world_state: Arc<RwLock<schema::World>>,
-// ) -> Result<()> {
-// }
-
 async fn handle_client(
     player_id: Uuid,
     stream: TcpStream,
