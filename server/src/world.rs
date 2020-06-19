@@ -1,13 +1,24 @@
 #![allow(dead_code)]
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use anyhow::{anyhow, Result};
 use log::warn;
+use ncollide2d::shape::{Cuboid, ShapeHandle};
+use nphysics2d::force_generator::DefaultForceGeneratorSet;
+use nphysics2d::joint::DefaultJointConstraintSet;
+use nphysics2d::math::{Force, ForceType};
+use nphysics2d::object::{
+    Body, BodyPartHandle, ColliderDesc, DefaultBodyHandle, DefaultBodySet, DefaultColliderHandle,
+    DefaultColliderSet, RigidBody, RigidBodyDesc,
+};
+use nphysics2d::world::{DefaultGeometricalWorld, DefaultMechanicalWorld};
 use rand::Rng;
 use schema::action;
 use uuid::Uuid;
 
-use crate::math::Vec2;
+type Vec2 = nalgebra::Vector2<f32>;
 
 // TODO(mluogh): replace with config.toml
 const TICKS_PER_SECOND: i8 = 10;
@@ -17,14 +28,24 @@ const TIME_PER_TICK_SQUARED: f32 = TIME_PER_TICK * TIME_PER_TICK;
 
 pub struct World {
     tanks: HashMap<Uuid, Tank>,
+    geometrical_world: DefaultGeometricalWorld<f32>,
+    mechanical_world: DefaultMechanicalWorld<f32>,
+
+    bodies: Rc<RefCell<DefaultBodySet<f32>>>,
+    colliders: Rc<RefCell<DefaultColliderSet<f32>>>,
+    joint_constraints: DefaultJointConstraintSet<f32>,
+    force_generators: DefaultForceGeneratorSet<f32>,
 }
 
 pub struct Tank {
     // TODO: discuss what player would look like and replace.
     player_id: Uuid,
-    pos: Vec2,
-    velocity: Vec2,
-    acceleration: Vec2,
+
+    body_handle: DefaultBodyHandle,
+    collider_handle: DefaultColliderHandle,
+
+    body_set: Rc<RefCell<DefaultBodySet<f32>>>,
+    collider_set: Rc<RefCell<DefaultColliderSet<f32>>>,
 }
 
 #[derive(Debug)]
@@ -42,52 +63,113 @@ impl Tank {
     // TODO(mluogh): replace base accel with config.toml
     // Default acceleration per second (no powerups/boost).
     const BASE_ACCELERATION: f32 = 0.1;
+    // TODO(mluogh): replace this constant with a config.toml
 
     pub fn player(&self) -> Uuid {
         self.player_id
     }
 
-    pub fn pos(&self) -> Vec2 {
-        self.pos
+    pub fn pos(&self) -> Result<Vec2> {
+        let vector = self.get_body()?.position().translation.vector;
+
+        Ok(vector)
     }
 
-    pub fn new(player_id: Uuid, pos: Vec2) -> Tank {
+    pub fn new(
+        body_set: Rc<RefCell<DefaultBodySet<f32>>>,
+        collider_set: Rc<RefCell<DefaultColliderSet<f32>>>,
+        player_id: Uuid,
+        pos: Vec2,
+    ) -> Tank {
+        let rigid_body = RigidBodyDesc::<f32>::new()
+            .mass(1.0)
+            .max_linear_velocity(20.0)
+            .linear_damping(1.0)
+            .translation(pos)
+            .build();
+
+        let body_handle = body_set.borrow_mut().insert(rigid_body);
+
+        let shape = ShapeHandle::new(Cuboid::new(Vec2::new(0.5, 0.5)));
+
+        let collider = ColliderDesc::new(shape).build(BodyPartHandle(body_handle, 0));
+        let collider_handle = collider_set.borrow_mut().insert(collider);
+
         Tank {
             player_id,
-            pos,
-            velocity: Vec2::new(0.0, 0.0),
-            acceleration: Vec2::new(0.0, 0.0),
+            body_handle,
+            collider_handle,
+            body_set,
+            collider_set,
         }
     }
 
     pub fn apply_controls(&mut self, controls: &[action::KeyPress]) -> Result<()> {
         for control in controls {
             match control {
-                action::KeyPress::UP => self.acceleration += Vec2::UP,
-                action::KeyPress::DOWN => self.acceleration += Vec2::DOWN,
-                action::KeyPress::LEFT => self.acceleration += Vec2::LEFT,
-                action::KeyPress::RIGHT => self.acceleration += Vec2::RIGHT,
+                action::KeyPress::UP => self.apply_local_force(Vec2::new(0.0, -1.0))?,
+                action::KeyPress::DOWN => self.apply_local_force(Vec2::new(0.0, 1.0))?,
+                action::KeyPress::LEFT => self.apply_local_force(Vec2::new(-1.0, 0.0))?,
+                action::KeyPress::RIGHT => self.apply_local_force(Vec2::new(1.0, 0.0))?,
                 action::KeyPress::UNKNOWN => return Err(anyhow!("Unknown control command.")),
             };
         }
 
-        self.acceleration = self.acceleration * Self::BASE_ACCELERATION;
-
         Ok(())
     }
 
-    pub fn update_pos(&mut self) -> Vec2 {
-        self.pos += self.velocity * TIME_PER_TICK + self.acceleration * (TIME_PER_TICK_SQUARED);
-        self.velocity += self.acceleration * TIME_PER_TICK;
-        self.acceleration = Vec2::new(0.0, 0.0);
-        self.pos
+    fn get_body(&self) -> Result<Ref<RigidBody<f32>>> {
+        if let None = self.body_set.borrow().rigid_body(self.body_handle) {
+            return Err(anyhow!("no body found for this tank"));
+        }
+
+        let body = Ref::map(self.body_set.borrow(), |body_set| {
+            body_set.rigid_body(self.body_handle).unwrap()
+        });
+
+        Ok(body)
+    }
+
+    fn get_body_mut(&self) -> Result<RefMut<RigidBody<f32>>> {
+        if let None = self.body_set.borrow().rigid_body(self.body_handle) {
+            return Err(anyhow!("no body found for this tank"));
+        }
+
+        let body = RefMut::map(self.body_set.borrow_mut(), |body_set| {
+            body_set.rigid_body_mut(self.body_handle).unwrap()
+        });
+
+        Ok(body)
+    }
+
+    fn apply_local_force(&self, linear_force: Vec2) -> Result<()> {
+        let mut tank_body = self.get_body_mut()?;
+        // tank_body.
+        // warn!("{:?}", tank_body.
+        tank_body.apply_local_force(
+            0,
+            &Force::new(linear_force, 0.0),
+            ForceType::AccelerationChange,
+            /*auto_wake_up=*/ true,
+        );
+
+        Ok(())
     }
 }
 
 impl World {
     pub fn new() -> World {
+        let mut mech_world = DefaultMechanicalWorld::new(Vec2::new(0.0, 0.0));
+        mech_world.set_timestep(TIME_PER_TICK);
         World {
             tanks: HashMap::new(),
+            geometrical_world: DefaultGeometricalWorld::new(),
+            mechanical_world: mech_world,
+
+            bodies: Rc::new(RefCell::new(DefaultBodySet::new())),
+            colliders: Rc::new(RefCell::new(DefaultColliderSet::new())),
+            joint_constraints: DefaultJointConstraintSet::new(),
+            force_generators: DefaultForceGeneratorSet::new(),
         }
     }
 
@@ -96,7 +178,12 @@ impl World {
             rand::thread_rng().gen_range(0.0, 10.0),
             rand::thread_rng().gen_range(0.0, 10.0),
         );
-        let tank = Tank::new(player_id, spawn_pos);
+        let tank = Tank::new(
+            Rc::clone(&self.bodies),
+            Rc::clone(&self.colliders),
+            player_id,
+            spawn_pos,
+        );
         self.tanks.insert(player_id, tank);
     }
 
@@ -124,11 +211,13 @@ impl World {
     }
 
     pub fn tick(&mut self) {
-        // TODO(mluogh): move this to a free function so that lazer Yi can take advantage of WASM
-        // and not write his own code
-        for tank in self.tanks.values_mut() {
-            tank.update_pos();
-        }
+        self.mechanical_world.step(
+            &mut self.geometrical_world,
+            &mut *self.bodies.borrow_mut(),
+            &mut *self.colliders.borrow_mut(),
+            &mut self.joint_constraints,
+            &mut self.force_generators,
+        );
     }
 
     pub fn tank_for_player(&self, player_id: Uuid) -> Option<&Tank> {
@@ -137,87 +226,5 @@ impl World {
 
     pub fn tanks(&self) -> impl Iterator<Item = &'_ Tank> {
         self.tanks.values()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn tank_can_be_moved() -> Result<()> {
-        let mut tank = Tank::new(Uuid::new_v4(), Vec2::new(0.0, 0.0));
-
-        tank.apply_controls(&vec![action::KeyPress::RIGHT])?;
-        // Equivalent to two ticks of game.
-        let first_x = tank.update_pos().x;
-        let second_x = tank.update_pos().x;
-        assert!(0.0 < first_x && first_x < second_x);
-
-        tank.apply_controls(&vec![action::KeyPress::LEFT])?;
-        let third_x = tank.update_pos().x;
-        tank.apply_controls(&vec![action::KeyPress::LEFT])?;
-        let fourth_x = tank.update_pos().x;
-        assert!(third_x > fourth_x);
-
-        tank.apply_controls(&vec![action::KeyPress::LEFT])?;
-        let last_x = tank.update_pos().x;
-
-        assert!(last_x < fourth_x);
-
-        tank.apply_controls(&vec![action::KeyPress::UP])?;
-        let first_y = tank.update_pos().y;
-        let second_y = tank.update_pos().y;
-        assert!(0.0 > first_y && first_y > second_y);
-
-        tank.apply_controls(&vec![action::KeyPress::DOWN])?;
-        tank.update_pos();
-        tank.apply_controls(&vec![action::KeyPress::DOWN])?;
-        let third_y = tank.update_pos().y;
-        assert!(third_y > second_y);
-
-        Ok(())
-    }
-
-    #[test]
-    fn world_can_register_players() {
-        let mut world = World::new();
-
-        let p1_id = Uuid::new_v4();
-        world.register_player(p1_id);
-        let p2_id = Uuid::new_v4();
-        world.register_player(p2_id);
-        let p3_id = Uuid::new_v4();
-        world.register_player(p3_id);
-
-        assert_eq!(world.tank_for_player(p1_id).unwrap().player_id, p1_id);
-        assert_eq!(world.tank_for_player(p2_id).unwrap().player_id, p2_id);
-        assert_eq!(world.tank_for_player(p3_id).unwrap().player_id, p3_id);
-    }
-
-    #[test]
-    fn world_can_apply_player_movements() {
-        let mut world = World::new();
-
-        let p1_id = Uuid::new_v4();
-        world.register_player(p1_id);
-        let p2_id = Uuid::new_v4();
-        world.register_player(p2_id);
-
-        let p1_original_y = world.tank_for_player(p1_id).unwrap().pos.y;
-        let p2_original_y = world.tank_for_player(p2_id).unwrap().pos.y;
-
-        let mut player_actions = HashMap::new();
-        player_actions.insert(p1_id, PlayerAction::new(vec![action::KeyPress::UP]));
-        player_actions.insert(p2_id, PlayerAction::new(vec![action::KeyPress::DOWN]));
-
-        world.apply_player_actions(&player_actions);
-        world.tick();
-
-        let p1_tank = world.tank_for_player(p1_id).unwrap();
-        assert!(p1_tank.pos.y < p1_original_y);
-
-        let p2_tank = world.tank_for_player(p2_id).unwrap();
-        assert!(p2_tank.pos.y > p2_original_y);
     }
 }

@@ -1,14 +1,14 @@
 use std::collections::HashMap;
-use std::time;
 
 use anyhow::Result;
+use async_std::net::{TcpListener, TcpStream};
 use async_std::sync::{Arc, Mutex, RwLock};
 use async_std::task;
 use futures::{stream, StreamExt};
-use log::{debug, warn};
+use log::{debug, info, warn};
 use uuid::Uuid;
 
-use crate::serialization::Protobufferable;
+use crate::publisher;
 use crate::world;
 
 // Listen for and enqueue actions from client.
@@ -49,29 +49,58 @@ where
 }
 
 // TODO(ming): Consume actions in non-blocking fashion instead of displaying actions periodically.
-pub async fn run_game_loop(
-    world: Arc<Mutex<world::World>>,
+// pub async fn run_game_loop(
+//     world: Arc<Mutex<world::World>>,
+//     actions: Arc<Mutex<HashMap<Uuid, world::PlayerAction>>>,
+//     world_state: Arc<RwLock<schema::World>>,
+// ) -> Result<()> {
+// }
+
+async fn handle_client(
+    player_id: Uuid,
+    stream: TcpStream,
     actions: Arc<Mutex<HashMap<Uuid, world::PlayerAction>>>,
     world_state: Arc<RwLock<schema::World>>,
 ) -> Result<()> {
-    loop {
-        //info!("Clearing action queue...");
-        let actions = {
-            let mut guard = actions.lock().await;
-            std::mem::replace(&mut *guard, HashMap::new())
-        };
-        //info!("Contents of action queue:");
-        {
-            let mut w = world.lock().await;
-            w.apply_player_actions(&actions);
-            w.tick();
-        }
-        {
-            let mut write_guard = world_state.write().await;
-            *write_guard = world.lock().await.serialize();
-        }
-        task::sleep(time::Duration::from_millis(100)).await;
+    info!("Handling client.");
+
+    let ws_stream = async_tungstenite::accept_async(stream).await?;
+
+    let (mut outgoing, mut incoming) = ws_stream.split();
+
+    // Spawn task to publish world state.
+    // TODO: Publish to clients in batch instead.
+    let publisher = publisher::publish(&mut outgoing, world_state);
+
+    // Listen for and enqueue actions from client.
+    let listener = listen(player_id, &mut incoming, actions);
+
+    futures::future::select(Box::pin(publisher), Box::pin(listener)).await;
+
+    Ok(())
+}
+
+pub async fn accept_new_connections(
+    actions: Arc<Mutex<HashMap<Uuid, world::PlayerAction>>>,
+    world_state: Arc<RwLock<schema::World>>,
+    new_players: Arc<Mutex<Vec<Uuid>>>,
+) -> Result<()> {
+    let tcp_listener = TcpListener::bind("127.0.0.1:9001").await?;
+    info!("Starting server");
+    // Listen for new WebSocket connections.
+    while let Ok((stream, address)) = tcp_listener.accept().await {
+        debug!("Received on address {}", address);
+        let new_player_id = Uuid::new_v4();
+        new_players.lock().await.push(new_player_id);
+        task::spawn(handle_client(
+            new_player_id,
+            stream,
+            Arc::clone(&actions),
+            Arc::clone(&world_state),
+        ));
     }
+
+    Ok(())
 }
 
 #[cfg(test)]
