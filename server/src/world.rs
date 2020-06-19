@@ -16,6 +16,7 @@ const TICKS_PER_SECOND: i8 = 10;
 const TIME_PER_TICK: f32 = 1.0 / TICKS_PER_SECOND as f32;
 const TIME_PER_TICK_SQUARED: f32 = TIME_PER_TICK * TIME_PER_TICK;
 
+#[derive(Default)]
 pub struct World {
     tanks: HashMap<Uuid, Tank>,
 }
