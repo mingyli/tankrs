@@ -8,7 +8,6 @@ use futures::{stream, StreamExt};
 use log::{debug, warn};
 use uuid::Uuid;
 
-use crate::serialization::Protobufferable;
 use crate::world;
 
 // Listen for and enqueue actions from client.
@@ -68,7 +67,7 @@ pub async fn run_game_loop(
         }
         {
             let mut write_guard = world_state.write().await;
-            *write_guard = world.lock().await.serialize();
+            *write_guard = schema::World::from(&*world.lock().await);
         }
         task::sleep(time::Duration::from_millis(100)).await;
     }

@@ -11,7 +11,6 @@ use uuid::Uuid;
 mod listener;
 mod math;
 mod publisher;
-mod serialization;
 mod world;
 
 async fn handle_client(
