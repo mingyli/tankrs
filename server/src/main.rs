@@ -77,5 +77,6 @@ fn main() -> Result<()> {
         })
         .init();
 
-    Ok(task::block_on(run()))
+    task::block_on(run());
+    Ok(())
 }

@@ -119,7 +119,12 @@ impl Tank {
     }
 
     fn get_body(&self) -> Result<Ref<RigidBody<f32>>> {
-        if let None = self.body_set.borrow().rigid_body(self.body_handle) {
+        if self
+            .body_set
+            .borrow()
+            .rigid_body(self.body_handle)
+            .is_none()
+        {
             return Err(anyhow!("no body found for this tank"));
         }
 
@@ -131,21 +136,23 @@ impl Tank {
     }
 
     fn get_body_mut(&self) -> Result<RefMut<RigidBody<f32>>> {
-        if let None = self.body_set.borrow().rigid_body(self.body_handle) {
+        if self
+            .body_set
+            .borrow()
+            .rigid_body(self.body_handle)
+            .is_none()
+        {
             return Err(anyhow!("no body found for this tank"));
         }
 
         let body = RefMut::map(self.body_set.borrow_mut(), |body_set| {
             body_set.rigid_body_mut(self.body_handle).unwrap()
         });
-
         Ok(body)
     }
 
     fn apply_local_force(&self, linear_force: Vec2) -> Result<()> {
         let mut tank_body = self.get_body_mut()?;
-        // tank_body.
-        // warn!("{:?}", tank_body.
         tank_body.apply_local_force(
             0,
             &Force::new(linear_force, 0.0),
