@@ -1,7 +1,6 @@
 #![allow(dead_code)]
-use std::cell::{Ref, RefCell, RefMut};
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::convert::TryFrom;
 
 use anyhow::{anyhow, Result};
 use log::warn;
@@ -31,8 +30,8 @@ pub struct World {
     geometrical_world: DefaultGeometricalWorld<f32>,
     mechanical_world: DefaultMechanicalWorld<f32>,
 
-    bodies: Rc<RefCell<DefaultBodySet<f32>>>,
-    colliders: Rc<RefCell<DefaultColliderSet<f32>>>,
+    bodies: DefaultBodySet<f32>,
+    colliders: DefaultColliderSet<f32>,
     joint_constraints: DefaultJointConstraintSet<f32>,
     force_generators: DefaultForceGeneratorSet<f32>,
 }
@@ -43,14 +42,17 @@ pub struct Tank {
 
     body_handle: DefaultBodyHandle,
     collider_handle: DefaultColliderHandle,
-
-    body_set: Rc<RefCell<DefaultBodySet<f32>>>,
-    collider_set: Rc<RefCell<DefaultColliderSet<f32>>>,
 }
 
 #[derive(Debug)]
 pub struct PlayerAction {
     pub control: Vec<action::KeyPress>,
+}
+
+pub trait Protobufferable {
+    type Proto;
+
+    fn serialize(&self, body_set: &DefaultBodySet<f32>) -> Result<Self::Proto>;
 }
 
 impl PlayerAction {
@@ -69,15 +71,15 @@ impl Tank {
         self.player_id
     }
 
-    pub fn pos(&self) -> Result<Vec2> {
-        let vector = self.get_body()?.position().translation.vector;
+    pub fn pos(&self, body_set: &DefaultBodySet<f32>) -> Result<Vec2> {
+        let vector = self.body(body_set)?.position().translation.vector;
 
         Ok(vector)
     }
 
     pub fn new(
-        body_set: Rc<RefCell<DefaultBodySet<f32>>>,
-        collider_set: Rc<RefCell<DefaultColliderSet<f32>>>,
+        body_set: &mut DefaultBodySet<f32>,
+        collider_set: &mut DefaultColliderSet<f32>,
         player_id: Uuid,
         pos: Vec2,
     ) -> Tank {
@@ -88,71 +90,64 @@ impl Tank {
             .translation(pos)
             .build();
 
-        let body_handle = body_set.borrow_mut().insert(rigid_body);
+        let body_handle = body_set.insert(rigid_body);
 
         let shape = ShapeHandle::new(Cuboid::new(Vec2::new(0.5, 0.5)));
 
         let collider = ColliderDesc::new(shape).build(BodyPartHandle(body_handle, 0));
-        let collider_handle = collider_set.borrow_mut().insert(collider);
+        let collider_handle = collider_set.insert(collider);
 
         Tank {
             player_id,
             body_handle,
             collider_handle,
-            body_set,
-            collider_set,
         }
     }
 
-    pub fn apply_controls(&mut self, controls: &[action::KeyPress]) -> Result<()> {
+    pub fn apply_controls(
+        &mut self,
+        body_set: &mut DefaultBodySet<f32>,
+        controls: &[action::KeyPress],
+    ) -> Result<()> {
         for control in controls {
+            let force;
             match control {
-                action::KeyPress::UP => self.apply_local_force(Vec2::new(0.0, -1.0))?,
-                action::KeyPress::DOWN => self.apply_local_force(Vec2::new(0.0, 1.0))?,
-                action::KeyPress::LEFT => self.apply_local_force(Vec2::new(-1.0, 0.0))?,
-                action::KeyPress::RIGHT => self.apply_local_force(Vec2::new(1.0, 0.0))?,
+                action::KeyPress::UP => force = Vec2::new(0.0, -1.0),
+                action::KeyPress::DOWN => force = Vec2::new(0.0, 1.0),
+                action::KeyPress::LEFT => force = Vec2::new(-1.0, 0.0),
+                action::KeyPress::RIGHT => force = Vec2::new(1.0, 0.0),
                 action::KeyPress::UNKNOWN => return Err(anyhow!("Unknown control command.")),
             };
+
+            self.apply_local_force(body_set, force)?;
         }
 
         Ok(())
     }
 
-    fn get_body(&self) -> Result<Ref<RigidBody<f32>>> {
-        if self
-            .body_set
-            .borrow()
+    fn body<'a>(&self, body_set: &'a DefaultBodySet<f32>) -> Result<&'a RigidBody<f32>> {
+        let body = body_set
             .rigid_body(self.body_handle)
-            .is_none()
-        {
-            return Err(anyhow!("no body found for this tank"));
-        }
-
-        let body = Ref::map(self.body_set.borrow(), |body_set| {
-            body_set.rigid_body(self.body_handle).unwrap()
-        });
-
+            .ok_or(anyhow!("no body found for this tank"))?;
         Ok(body)
     }
 
-    fn get_body_mut(&self) -> Result<RefMut<RigidBody<f32>>> {
-        if self
-            .body_set
-            .borrow()
-            .rigid_body(self.body_handle)
-            .is_none()
-        {
-            return Err(anyhow!("no body found for this tank"));
-        }
-
-        let body = RefMut::map(self.body_set.borrow_mut(), |body_set| {
-            body_set.rigid_body_mut(self.body_handle).unwrap()
-        });
+    fn body_mut<'a>(
+        &self,
+        body_set: &'a mut DefaultBodySet<f32>,
+    ) -> Result<&'a mut RigidBody<f32>> {
+        let body = body_set
+            .rigid_body_mut(self.body_handle)
+            .ok_or(anyhow!("no body found for this tank"))?;
         Ok(body)
     }
 
-    fn apply_local_force(&self, linear_force: Vec2) -> Result<()> {
-        let mut tank_body = self.get_body_mut()?;
+    fn apply_local_force(
+        &self,
+        body_set: &mut DefaultBodySet<f32>,
+        linear_force: Vec2,
+    ) -> Result<()> {
+        let tank_body = self.body_mut(body_set)?;
         tank_body.apply_local_force(
             0,
             &Force::new(linear_force, 0.0),
@@ -161,6 +156,19 @@ impl Tank {
         );
 
         Ok(())
+    }
+}
+
+impl Protobufferable for Tank {
+    type Proto = schema::Tank;
+
+    fn serialize(&self, body_set: &DefaultBodySet<f32>) -> Result<schema::Tank> {
+        let mut vec_proto = schema::geometry::Vec2::new();
+        let mut proto = schema::Tank::new();
+        vec_proto.set_x(self.pos(body_set)?.x);
+        vec_proto.set_y(self.pos(body_set)?.y);
+        proto.set_position(vec_proto);
+        Ok(proto)
     }
 }
 
@@ -173,11 +181,15 @@ impl World {
             geometrical_world: DefaultGeometricalWorld::new(),
             mechanical_world: mech_world,
 
-            bodies: Rc::new(RefCell::new(DefaultBodySet::new())),
-            colliders: Rc::new(RefCell::new(DefaultColliderSet::new())),
+            bodies: DefaultBodySet::new(),
+            colliders: DefaultColliderSet::new(),
             joint_constraints: DefaultJointConstraintSet::new(),
             force_generators: DefaultForceGeneratorSet::new(),
         }
+    }
+
+    pub fn body_set(&self) -> &DefaultBodySet<f32> {
+        &self.bodies
     }
 
     pub fn register_player(&mut self, player_id: Uuid) {
@@ -185,12 +197,7 @@ impl World {
             rand::thread_rng().gen_range(0.0, 10.0),
             rand::thread_rng().gen_range(0.0, 10.0),
         );
-        let tank = Tank::new(
-            Rc::clone(&self.bodies),
-            Rc::clone(&self.colliders),
-            player_id,
-            spawn_pos,
-        );
+        let tank = Tank::new(&mut self.bodies, &mut self.colliders, player_id, spawn_pos);
         self.tanks.insert(player_id, tank);
     }
 
@@ -211,7 +218,7 @@ impl World {
 
     fn apply_player_action(&mut self, player_id: &Uuid, action: &PlayerAction) -> Result<()> {
         if let Some(tank) = self.tanks.get_mut(player_id) {
-            tank.apply_controls(&action.control)
+            tank.apply_controls(&mut self.bodies, &action.control)
         } else {
             Err(anyhow!("Tank for player id {} not found.", player_id))
         }
@@ -220,8 +227,8 @@ impl World {
     pub fn tick(&mut self) {
         self.mechanical_world.step(
             &mut self.geometrical_world,
-            &mut *self.bodies.borrow_mut(),
-            &mut *self.colliders.borrow_mut(),
+            &mut self.bodies,
+            &mut self.colliders,
             &mut self.joint_constraints,
             &mut self.force_generators,
         );
@@ -233,5 +240,17 @@ impl World {
 
     pub fn tanks(&self) -> impl Iterator<Item = &'_ Tank> {
         self.tanks.values()
+    }
+}
+
+impl TryFrom<&World> for schema::World {
+    type Error = anyhow::Error;
+
+    fn try_from(world: &World) -> Result<Self> {
+        let mut proto = schema::World::new();
+        for tank in world.tanks() {
+            proto.mut_tanks().push(tank.serialize(&world.bodies)?);
+        }
+        Ok(proto)
     }
 }

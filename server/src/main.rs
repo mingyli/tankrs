@@ -1,17 +1,14 @@
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::time;
 
 use anyhow::Result;
 use async_std::sync::{Arc, Mutex, RwLock};
 use async_std::task;
-use log::error;
-
-use crate::serialization::Protobufferable;
 
 mod listener;
 mod math;
 mod publisher;
-mod serialization;
 mod world;
 
 async fn run() {
@@ -27,7 +24,6 @@ async fn run() {
     ));
 
     loop {
-        //info!("Clearing action queue...");
         let accumulated_actions = {
             let mut guard = actions.lock().await;
             std::mem::replace(&mut *guard, HashMap::new())
@@ -47,10 +43,10 @@ async fn run() {
 
         {
             let mut write_guard = world_state.write().await;
-            match game_world.serialize() {
+            match schema::World::try_from(&game_world) {
                 Ok(proto) => *write_guard = proto,
                 Err(msg) => {
-                    error!("Could not parse proto {:?}", msg);
+                    panic!("Could not parse proto {:?}", msg);
                 }
             }
         }
