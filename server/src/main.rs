@@ -12,7 +12,7 @@ mod publisher;
 mod world;
 
 async fn run() {
-    let mut game_world = world::World::new();
+    let mut game_world = world::World::default();
     let actions = Arc::new(Mutex::new(HashMap::new()));
     let world_state = Arc::new(RwLock::new(schema::World::new()));
     let new_players = Arc::new(Mutex::new(Vec::new()));

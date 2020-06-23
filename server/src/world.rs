@@ -128,7 +128,7 @@ impl Tank {
     fn body<'a>(&self, body_set: &'a DefaultBodySet<f32>) -> Result<&'a RigidBody<f32>> {
         let body = body_set
             .rigid_body(self.body_handle)
-            .ok_or(anyhow!("no body found for this tank"))?;
+            .ok_or_else(|| anyhow!("no body found for this tank"))?;
         Ok(body)
     }
 
@@ -138,7 +138,7 @@ impl Tank {
     ) -> Result<&'a mut RigidBody<f32>> {
         let body = body_set
             .rigid_body_mut(self.body_handle)
-            .ok_or(anyhow!("no body found for this tank"))?;
+            .ok_or_else(|| anyhow!("no body found for this tank"))?;
         Ok(body)
     }
 
@@ -186,6 +186,10 @@ impl World {
             joint_constraints: DefaultJointConstraintSet::new(),
             force_generators: DefaultForceGeneratorSet::new(),
         }
+    }
+
+    pub fn default() -> World {
+        World::new()
     }
 
     pub fn body_set(&self) -> &DefaultBodySet<f32> {
@@ -240,6 +244,12 @@ impl World {
 
     pub fn tanks(&self) -> impl Iterator<Item = &'_ Tank> {
         self.tanks.values()
+    }
+}
+
+impl Default for World {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
