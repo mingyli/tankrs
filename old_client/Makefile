@@ -1,0 +1,21 @@
+PROTOC_GEN_TS_PATH = "../node_modules/.bin/protoc-gen-ts"
+OUT_DIR = "./src/protobuf/"
+
+default: all
+
+schema:
+	mkdir -p $(OUT_DIR)
+	protoc \
+		--plugin="protoc-gen-ts=$(PROTOC_GEN_TS_PATH)" \
+		--js_out="import_style=commonjs,binary:$(OUT_DIR)" \
+		--ts_out="$(OUT_DIR)" \
+		--proto_path="../schema/" \
+		../schema/*.proto
+
+dev:
+	yarn run typecheck
+	yarn run build
+
+all:
+	make schema
+	make dev
