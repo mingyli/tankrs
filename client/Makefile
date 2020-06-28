@@ -12,10 +12,5 @@ schema:
 		--proto_path="../schema/" \
 		../schema/*.proto
 
-dev:
-	yarn run typecheck
-	yarn run build
-
 all:
 	make schema
-	make dev

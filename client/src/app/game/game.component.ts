@@ -11,11 +11,11 @@ import { World } from './../protobuf/world_pb'
 })
 export class GameComponent implements OnInit {
   world: Observable<World>
-  constructor(private readonly gameService: GameService) {
-    this.world = gameService.world()
-  }
+  constructor(private readonly gameService: GameService) {}
 
   ngOnInit(): void {
+    this.world = this.gameService.world()
+
     document.addEventListener('keydown', (event: KeyboardEvent) => {
       this.gameService.startSendingKey(event.key)
     })
