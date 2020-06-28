@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "make && ng serve",
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
@@ -26,7 +26,8 @@
     "@angular/router": "~9.1.4",
     "rxjs": "~6.5.4",
     "tslib": "^1.10.0",
-    "zone.js": "~0.10.2"
+    "zone.js": "~0.10.2",
+    "ts-protoc-gen": "^0.12.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "~0.901.4",
@@ -51,7 +52,6 @@
     "@types/google-protobuf": "^3.7.2",
     "browserify": "^16.5.1",
     "prettier": "^2.0.5",
-    "ts-protoc-gen": "^0.12.0",
     "tsify": "^4.0.1"
   }
 }

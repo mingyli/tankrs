@@ -1,5 +1,5 @@
-PROTOC_GEN_TS_PATH = "../node_modules/.bin/protoc-gen-ts"
-OUT_DIR = "./src/protobuf/"
+PROTOC_GEN_TS_PATH = "node_modules/.bin/protoc-gen-ts"
+OUT_DIR = "./src/app/protobuf/"
 
 default: all
 
