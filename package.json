@@ -1,9 +1,7 @@
 {
   "name": "tankrs",
   "private": true,
-  "workspaces": [
-    "client"
-  ],
+  "workspaces": [],
   "version": "1.0.0",
   "repository": "https://github.com/mingyli/tankrs.git",
   "author": "Yi Zhao <yi@berkeley.edu>",
