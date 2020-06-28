@@ -57,6 +57,7 @@ jobs:
 
   global-format:
     name: global-format
+    runs-on: ubuntu-latest
     steps:
       - run: yarn install
       - run: yarn run check-format
