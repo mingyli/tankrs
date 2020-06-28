@@ -77,22 +77,22 @@ export class GameDisplayComponent implements AfterViewInit {
     this.brush.lineWidth = 0.5
     this.brush.strokeStyle = '#8d8d91'
 
-    let cur_x: number = 0
-    while (cur_x < this.canvas.nativeElement.width) {
+    let curX = 0
+    while (curX < this.canvas.nativeElement.width) {
       this.drawSegment(
-        new Point(cur_x, 0),
-        new Point(cur_x, this.canvas.nativeElement.height),
+        new Point(curX, 0),
+        new Point(curX, this.canvas.nativeElement.height),
       )
-      cur_x += this.xScale
+      curX += this.xScale
     }
 
-    let cur_y: number = 0
-    while (cur_y < this.canvas.nativeElement.height) {
+    let curY = 0
+    while (curY < this.canvas.nativeElement.height) {
       this.drawSegment(
-        new Point(0, cur_y),
-        new Point(this.canvas.nativeElement.width, cur_y),
+        new Point(0, curY),
+        new Point(this.canvas.nativeElement.width, curY),
       )
-      cur_y += this.yScale
+      curY += this.yScale
     }
   }
 }

@@ -25,7 +25,7 @@
       true,
       "element",
       "",
-      "kebab-case"
+      ""
     ],
     "import-blacklist": [
       true,
@@ -56,7 +56,6 @@
       true,
       "ignore-params"
     ],
-    "no-non-null-assertion": true,
     "no-redundant-jsdoc": true,
     "no-switch-case-fall-through": true,
     "no-var-requires": false,
