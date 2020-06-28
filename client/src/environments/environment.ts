@@ -5,7 +5,7 @@
 export const environment = {
   production: false,
   sendRate: 100,
-  wsAddress: 'ws://blue-warthog-45.serverless.social',
+  wsAddress: 'ws://localhost:9001',
 }
 
 /*

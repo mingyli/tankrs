@@ -61,7 +61,6 @@ export class GameService {
         .filter((key) => this.keyMap.get(key.code))
         .forEach((key) => action.addActions(key.action))
       if (action.getActionsList().length > 0) {
-        console.log(action.getActionsList().length)
         this.webSocket.next(action.serializeBinary())
       }
     }, environment.sendRate)
