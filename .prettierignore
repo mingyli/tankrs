@@ -1,3 +1,4 @@
-target/
-client/src/protobuf/
-client/app/app.js
+**/target/
+client/src/app/protobuf/
+client/node_modules
+client/dist
