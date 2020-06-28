@@ -1,8 +1,8 @@
-import { Component, AfterViewInit, Input, ViewChild, ElementRef } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Vec2 } from './../protobuf/geometry_pb';
-import { Tank } from './../protobuf/tank_pb';
-import { World } from './../protobuf/world_pb';
+import { Component, AfterViewInit, Input, ViewChild, ElementRef } from '@angular/core'
+import { Observable } from 'rxjs'
+import { Vec2 } from './../protobuf/geometry_pb'
+import { Tank } from './../protobuf/tank_pb'
+import { World } from './../protobuf/world_pb'
 
 // Point.
 class Point {
@@ -20,38 +20,36 @@ class Point {
 @Component({
   selector: 'game-display',
   templateUrl: './game-display.component.html',
-  styleUrls: ['./game-display.component.scss']
+  styleUrls: ['./game-display.component.scss'],
 })
 export class GameDisplayComponent implements AfterViewInit {
-
   @ViewChild('displayCanvas')
-  canvas: ElementRef<HTMLCanvasElement>;
-  brush: CanvasRenderingContext2D;
+  canvas: ElementRef<HTMLCanvasElement>
+  brush: CanvasRenderingContext2D
 
-  @Input() world: Observable<World>;
+  @Input() world: Observable<World>
 
-  xScale = 50;
-  yScale = 50;
+  xScale = 50
+  yScale = 50
 
-  constructor() { }
+  constructor() {}
 
   ngAfterViewInit(): void {
-    this.canvas.nativeElement.width = window.innerWidth;
-    this.canvas.nativeElement.height = window.innerHeight;
-    this.brush = this.canvas.nativeElement.getContext('2d')!;
+    this.canvas.nativeElement.width = window.innerWidth
+    this.canvas.nativeElement.height = window.innerHeight
+    this.brush = this.canvas.nativeElement.getContext('2d')!
     this.world.subscribe((world) => {
-      this.brush.clearRect(0, 0,
-        this.canvas.nativeElement.width,
-        this.canvas.nativeElement.height);
+      this.brush.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height)
       this.drawAxis()
 
-      world.getTanksList()
+      world
+        .getTanksList()
         .filter((tank: Tank) => tank.hasPosition())
         .map((tank: Tank) => tank.getPosition()!)
         .forEach((pos: Vec2) => {
-          this.drawBox(new Point(pos.getX(), pos.getY()));
-        });
-    });
+          this.drawBox(new Point(pos.getX(), pos.getY()))
+        })
+    })
   }
 
   toDisplayCoordinates(point: Point) {
@@ -79,19 +77,13 @@ export class GameDisplayComponent implements AfterViewInit {
 
     let curX = 0
     while (curX < this.canvas.nativeElement.width) {
-      this.drawSegment(
-        new Point(curX, 0),
-        new Point(curX, this.canvas.nativeElement.height),
-      )
+      this.drawSegment(new Point(curX, 0), new Point(curX, this.canvas.nativeElement.height))
       curX += this.xScale
     }
 
     let curY = 0
     while (curY < this.canvas.nativeElement.height) {
-      this.drawSegment(
-        new Point(0, curY),
-        new Point(this.canvas.nativeElement.width, curY),
-      )
+      this.drawSegment(new Point(0, curY), new Point(this.canvas.nativeElement.width, curY))
       curY += this.yScale
     }
   }

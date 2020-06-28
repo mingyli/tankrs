@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  sendRate: 100
-};
+  sendRate: 100,
+}

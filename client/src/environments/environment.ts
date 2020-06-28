@@ -5,8 +5,8 @@
 export const environment = {
   production: false,
   sendRate: 100,
-  wsAddress: 'ws://blue-warthog-45.serverless.social'
-};
+  wsAddress: 'ws://blue-warthog-45.serverless.social',
+}
 
 /*
  * For easier debugging in development mode, you can import the following file
