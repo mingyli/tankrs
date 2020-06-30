@@ -10,14 +10,14 @@ import { World } from '../protobuf/world_pb'
 describe('GameComponent', () => {
   let component: GameComponent
   let fixture: ComponentFixture<GameComponent>
-  let mockGameService: { world: jasmine.Spy; };
-  let world: Subject<World>;
+  let mockGameService: { world: jasmine.Spy }
+  let world: Subject<World>
 
   beforeEach(async(() => {
-    mockGameService = jasmine.createSpyObj('GameService', ['world']);
+    mockGameService = jasmine.createSpyObj('GameService', ['world'])
 
-    world = new Subject<World>();
-    mockGameService.world.and.returnValue(world);
+    world = new Subject<World>()
+    mockGameService.world.and.returnValue(world)
 
     TestBed.configureTestingModule({
       providers: [{ provide: GameService, useValue: mockGameService }],
