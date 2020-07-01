@@ -1,5 +1,5 @@
-PROTOC_GEN_TS_PATH = "../node_modules/.bin/protoc-gen-ts"
-OUT_DIR = "./src/protobuf/"
+PROTOC_GEN_TS_PATH = "node_modules/.bin/protoc-gen-ts"
+OUT_DIR = "./src/app/protobuf/"
 
 default: all
 
@@ -12,10 +12,5 @@ schema:
 		--proto_path="../schema/" \
 		../schema/*.proto
 
-dev:
-	yarn run typecheck
-	yarn run build
-
 all:
 	make schema
-	make dev

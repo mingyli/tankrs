@@ -1,15 +1,20 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    // Target latest version of ECMAScript.
-    "target": "esnext",
-    // Search under node_modules for non-relative imports.
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "module": "esnext",
     "moduleResolution": "node",
-    // Process & infer types from .js files.
-    "allowJs": true,
-    // Enable strictest settings like strictNullChecks & noImplicitAny.
-    "strict": true,
-    // Import non-ES modules as default imports.
-    "esModuleInterop": true
+    "importHelpers": true,
+    "target": "es2015",
+    "lib": ["es2018", "dom"]
   },
-  "include": ["src"]
+  "angularCompilerOptions": {
+    "fullTemplateTypeCheck": true,
+    "strictInjectionParameters": true
+  }
 }
